@@ -20,20 +20,19 @@ func ShortenerHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	// если методом POST
 	case http.MethodGet:
-		getShortUrl(w, r)
+		getShortURL(w, r)
 	case http.MethodPost:
-		saveShortUrl(w, r)
+		saveShortURL(w, r)
 	default:
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return
 	}
 }
 
-func saveShortUrl(w http.ResponseWriter, r *http.Request) {
+func saveShortURL(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getShortUrl(w http.ResponseWriter, r *http.Request) {
+func getShortURL(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
-
 }
