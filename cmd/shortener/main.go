@@ -6,9 +6,7 @@ import (
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.Handle("/", http.HandlerFunc(ShortenerHandler))
-
+	http.Handle("/", http.HandlerFunc(ShortenerHandler))
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -16,9 +14,7 @@ func main() {
 }
 
 func ShortenerHandler(w http.ResponseWriter, r *http.Request) {
-	// проверяем, каким методом получили запрос
 	switch r.Method {
-	// если методом POST
 	case http.MethodGet:
 		getShortURL(w, r)
 	case http.MethodPost:
