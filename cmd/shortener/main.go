@@ -45,6 +45,7 @@ func saveShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	Urls[uh] = string(url)
+	w.Write([]byte("localhost:8080/" + uh))
 	fmt.Println("added short url")
 	fmt.Println(Urls)
 }
