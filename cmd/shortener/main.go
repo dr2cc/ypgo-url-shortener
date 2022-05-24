@@ -51,9 +51,9 @@ func saveShortURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func getShortURL(w http.ResponseWriter, r *http.Request) {
-	uId := strings.TrimPrefix(r.URL.Path, "/")
-	fmt.Println("parsed id ", uId)
-	http.Redirect(w, r, Urls[uId], http.StatusTemporaryRedirect)
+	uID := strings.TrimPrefix(r.URL.Path, "/")
+	fmt.Println("parsed id ", uID)
+	http.Redirect(w, r, Urls[uID], http.StatusTemporaryRedirect)
 }
 
 func hash(s []byte) string {
