@@ -1,66 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"hash/fnv"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
-	"strings"
+	"github.com/belamov/ypgo-url-shortener/internal/app/config"
+	"github.com/belamov/ypgo-url-shortener/internal/app/server"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
+	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
 
 func main() {
-	http.Handle("/", http.HandlerFunc(ShortenerHandler))
-	err := http.ListenAndServe("localhost:8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-}
+	cfg := config.New()
+	repo := storage.NewInMemoryRepository()
+	gen := &generator.HashGenerator{}
+	service := services.New(repo, gen, cfg)
+	srv := server.New(cfg, service)
 
-var Urls = make(map[string]string)
-
-func ShortenerHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		getShortURL(w, r)
-	case http.MethodPost:
-		saveShortURL(w, r)
-	default:
-		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
-		return
-	}
-}
-
-func saveShortURL(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusCreated)
-	url, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	uh := hash(url)
-	if uh == "" {
-		http.Error(w, "cannot generate short url", 500)
-		return
-	}
-	Urls[uh] = string(url)
-	w.Write([]byte("http://localhost:8080/" + uh))
-	fmt.Println("added short url")
-	fmt.Println(Urls)
-}
-
-func getShortURL(w http.ResponseWriter, r *http.Request) {
-	uID := strings.TrimPrefix(r.URL.Path, "/")
-	fmt.Println("parsed id ", uID)
-	http.Redirect(w, r, Urls[uID], http.StatusTemporaryRedirect)
-}
-
-func hash(s []byte) string {
-	h := fnv.New32a()
-	_, err := h.Write(s)
-	if err != nil {
-		return ""
-	}
-	return strconv.Itoa(int(h.Sum32()))
+	srv.Run()
 }
