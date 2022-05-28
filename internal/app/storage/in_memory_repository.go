@@ -13,6 +13,7 @@ func NewInMemoryRepository() *InMemoryRepository {
 		storage: make(storage),
 	}
 }
+
 func (repo *InMemoryRepository) Save(url string, id string) error {
 	if _, ok := repo.storage[id]; ok {
 		return errors.New("not unique id")

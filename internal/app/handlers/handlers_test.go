@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"errors"
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +18,7 @@ func TestShortenerHandler(t *testing.T) {
 	type want struct {
 		contentType string
 		statusCode  int
+		body        string
 	}
 	tests := []struct {
 		name    string
@@ -29,6 +32,7 @@ func TestShortenerHandler(t *testing.T) {
 			want: want{
 				contentType: "",
 				statusCode:  http.StatusCreated,
+				body:        "http://localhost:8080/id",
 			},
 			request: "/",
 			method:  http.MethodPost,
@@ -39,6 +43,7 @@ func TestShortenerHandler(t *testing.T) {
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusBadRequest,
+				body:        "url required",
 			},
 			request: "/",
 			method:  http.MethodPost,
@@ -49,6 +54,7 @@ func TestShortenerHandler(t *testing.T) {
 			want: want{
 				contentType: "text/html; charset=utf-8",
 				statusCode:  http.StatusTemporaryRedirect,
+				body:        "<a href=\"/url\">Temporary Redirect</a>.",
 			},
 			request: "/id",
 			method:  http.MethodGet,
@@ -59,6 +65,7 @@ func TestShortenerHandler(t *testing.T) {
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusBadRequest,
+				body:        "{id} required",
 			},
 			request: "/",
 			method:  http.MethodGet,
@@ -69,10 +76,44 @@ func TestShortenerHandler(t *testing.T) {
 			want: want{
 				contentType: "text/plain; charset=utf-8",
 				statusCode:  http.StatusNotFound,
+				body:        "cant find full url",
 			},
 			request: "/missing",
 			method:  http.MethodGet,
 			body:    "",
+		},
+		{
+			name: "not supported method",
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusMethodNotAllowed,
+				body:        "Unsupported method",
+			},
+			request: "/asd",
+			method:  http.MethodDelete,
+			body:    "",
+		},
+		{
+			name: "it returns 500 when service fails on expanding",
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusInternalServerError,
+				body:        "error text",
+			},
+			request: "/error",
+			method:  http.MethodGet,
+			body:    "",
+		},
+		{
+			name: "it returns 500 when service fails on shortening",
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusInternalServerError,
+				body:        "err",
+			},
+			request: "/error",
+			method:  http.MethodPost,
+			body:    "error_on_shortening",
 		},
 	}
 	for _, tt := range tests {
@@ -85,10 +126,12 @@ func TestShortenerHandler(t *testing.T) {
 			mockRepo.On("GetByID", "id").Return("url", nil)
 			mockRepo.On("GetByID", "").Return("", nil)
 			mockRepo.On("GetByID", "missing").Return("", nil)
+			mockRepo.On("GetByID", "error").Return("", errors.New("error text"))
 
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
+			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
 			cfg := config.New()
 
@@ -102,6 +145,9 @@ func TestShortenerHandler(t *testing.T) {
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			resBody, _ := io.ReadAll(result.Body)
+			assert.Equal(t, tt.want.body, string(bytes.TrimSpace(resBody)))
+
 		})
 	}
 }

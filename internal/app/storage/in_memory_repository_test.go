@@ -107,16 +107,9 @@ func TestInMemoryRepository_Save(t *testing.T) {
 	}
 }
 
-//func TestInMemoryRepository_Save_overwrite(t *testing.T) {
-//	t.Run("it doesn't override id", func(t *testing.T) {
-//		repo := &InMemoryRepository{
-//			storage: map[string]string{
-//				"id": "some url",
-//			}}
-//		err := repo.Save("new url", "id")
-//		assert.Error(t, err)
-//		assert.Equal(t, tt.wantNewLen, len(repo.storage))
-//		assert.Equal(t, tt.args.url, repo.storage[tt.args.id])
-//		assert.Contains(t, repo.storage, tt.args.id)
-//	})
-//}
+func TestNewInMemoryRepository(t *testing.T) {
+	t.Run("in memory repo init", func(t *testing.T) {
+		repo := NewInMemoryRepository()
+		assert.Equal(t, &InMemoryRepository{storage: map[string]string{}}, repo)
+	})
+}
