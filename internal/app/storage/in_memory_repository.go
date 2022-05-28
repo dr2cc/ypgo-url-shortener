@@ -21,6 +21,6 @@ func (repo *InMemoryRepository) Save(url string, id string) error {
 	return nil
 }
 
-func (repo *InMemoryRepository) GetById(id string) (string, error) {
+func (repo *InMemoryRepository) GetByID(id string) (string, error) {
 	return repo.storage[id], nil
 }

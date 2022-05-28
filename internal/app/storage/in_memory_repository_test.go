@@ -44,7 +44,7 @@ func TestInMemoryRepository_GetById(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			got, err := repo.GetById(tt.args.id)
+			got, err := repo.GetByID(tt.args.id)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			}

@@ -82,19 +82,23 @@ func TestShortenerHandler(t *testing.T) {
 
 			mockRepo := new(mocks.MockRepo)
 			mockRepo.On("Save", tt.body, "id").Return(nil)
-			mockRepo.On("GetById", "id").Return("url", nil)
-			mockRepo.On("GetById", "").Return("", nil)
-			mockRepo.On("GetById", "missing").Return("", nil)
+			mockRepo.On("GetByID", "id").Return("url", nil)
+			mockRepo.On("GetByID", "").Return("", nil)
+			mockRepo.On("GetByID", "missing").Return("", nil)
 
 			mockGen := new(mocks.MockGen)
-			mockGen.On("GenerateIdFromString", "url").Return("id", nil)
-			mockGen.On("GenerateIdFromString", "").Return("", errors.New("err"))
+			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
+			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
 
 			cfg := config.New()
+
 			service := services.New(mockRepo, mockGen, cfg)
+
 			h := ShortenerHandler(service)
 			h.ServeHTTP(w, request)
+
 			result := w.Result()
+			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))

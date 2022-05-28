@@ -9,12 +9,12 @@ import (
 
 type HashGenerator struct{}
 
-func (HashGenerator) GenerateIdFromString(str string) (string, error) {
+func (HashGenerator) GenerateIDFromString(str string) (string, error) {
 	if str == "" {
 		return "", errors.New("empty string to generate id from")
 	}
 
-	hash, err := hashUrl(str)
+	hash, err := hashURL(str)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func toBase62(id uint32) string {
 	return i.Text(62)
 }
 
-func hashUrl(url string) (uint32, error) {
+func hashURL(url string) (uint32, error) {
 	h := fnv.New32a()
 	_, err := h.Write([]byte(url))
 	if err != nil {

@@ -22,7 +22,7 @@ func New(repository storage.Repository, generator generator.Generator, config co
 }
 
 func (service *Shortener) Shorten(url string) (string, error) {
-	urlID, err := service.generator.GenerateIdFromString(url)
+	urlID, err := service.generator.GenerateIDFromString(url)
 	if err != nil {
 		return "", err
 	}
@@ -37,9 +37,9 @@ func (service *Shortener) Shorten(url string) (string, error) {
 }
 
 func (service *Shortener) Expand(id string) (string, error) {
-	origUrl, err := service.repository.GetById(id)
+	origURL, err := service.repository.GetByID(id)
 	if err != nil {
 		return "", err
 	}
-	return origUrl, nil
+	return origURL, nil
 }

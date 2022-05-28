@@ -34,8 +34,8 @@ func TestShortener_Expand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rm := new(mocks.MockRepo)
-			rm.On("GetById", "id").Return("url", nil)
-			rm.On("GetById", "missing").Return("", errors.New(""))
+			rm.On("GetByID", "id").Return("url", nil)
+			rm.On("GetByID", "missing").Return("", errors.New(""))
 
 			service := New(
 				rm,
@@ -84,15 +84,15 @@ func TestShortener_Shorten(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rm := new(mocks.MockRepo)
-			rm.On("GetById", "id").Return("url", nil)
-			rm.On("GetById", "missing").Return("", errors.New(""))
+			rm.On("GetByID", "id").Return("url", nil)
+			rm.On("GetByID", "missing").Return("", errors.New(""))
 			rm.On("Save", "url", "id").Return(nil)
 			rm.On("Save", "fail", "id").Return(errors.New(""))
 
 			gm := new(mocks.MockGen)
-			gm.On("GenerateIdFromString", "url").Return("id", nil)
-			gm.On("GenerateIdFromString", "fail").Return("id", nil)
-			gm.On("GenerateIdFromString", "").Return("", errors.New(""))
+			gm.On("GenerateIDFromString", "url").Return("id", nil)
+			gm.On("GenerateIDFromString", "fail").Return("id", nil)
+			gm.On("GenerateIDFromString", "").Return("", errors.New(""))
 
 			service := New(
 				rm,

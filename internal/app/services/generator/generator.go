@@ -1,5 +1,5 @@
 package generator
 
 type Generator interface {
-	GenerateIdFromString(url string) (string, error)
+	GenerateIDFromString(url string) (string, error)
 }

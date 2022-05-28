@@ -11,7 +11,7 @@ func (m *MockRepo) Save(url string, id string) error {
 	return args.Error(0)
 }
 
-func (m *MockRepo) GetById(id string) (string, error) {
+func (m *MockRepo) GetByID(id string) (string, error) {
 	args := m.Called(id)
 	return args.String(0), args.Error(1)
 }
@@ -20,7 +20,7 @@ type MockGen struct {
 	mock.Mock
 }
 
-func (m *MockGen) GenerateIdFromString(str string) (string, error) {
+func (m *MockGen) GenerateIDFromString(str string) (string, error) {
 	args := m.Called(str)
 	return args.String(0), args.Error(1)
 }

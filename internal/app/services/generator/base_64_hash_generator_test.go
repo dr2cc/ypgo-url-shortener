@@ -45,7 +45,7 @@ func Test_hashToBase62Generator_GenerateIdFromString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ha := HashGenerator{}
-			got, err := ha.GenerateIdFromString(tt.args.str)
+			got, err := ha.GenerateIDFromString(tt.args.str)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			}

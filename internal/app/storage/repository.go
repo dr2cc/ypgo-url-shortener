@@ -2,5 +2,5 @@ package storage
 
 type Repository interface {
 	Save(url string, id string) error
-	GetById(id string) (string, error)
+	GetByID(id string) (string, error)
 }
