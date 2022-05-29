@@ -122,6 +122,8 @@ func TestHandler_Expand(t *testing.T) {
 			defer ts.Close()
 
 			result, body := testRequest(t, ts, tt.method, tt.request, "")
+			defer result.Body.Close()
+
 			fmt.Println(result)
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
