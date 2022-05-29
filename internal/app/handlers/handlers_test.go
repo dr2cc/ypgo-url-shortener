@@ -36,9 +36,9 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 	require.NoError(t, err)
 
 	respBody, err = ioutil.ReadAll(resp.Body)
-	require.NoError(t, err)
-
 	defer resp.Body.Close()
+
+	require.NoError(t, err)
 
 	return resp, string(bytes.TrimSpace(respBody))
 }
