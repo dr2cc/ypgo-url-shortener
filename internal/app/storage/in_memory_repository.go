@@ -23,5 +23,9 @@ func (repo *InMemoryRepository) Save(url string, id string) error {
 }
 
 func (repo *InMemoryRepository) GetByID(id string) (string, error) {
-	return repo.storage[id], nil
+	fu, ok := repo.storage[id]
+	if !ok {
+		return "", errors.New("can't find full url by id")
+	}
+	return fu, nil
 }

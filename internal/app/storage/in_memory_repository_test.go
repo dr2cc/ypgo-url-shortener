@@ -36,7 +36,7 @@ func TestInMemoryRepository_GetById(t *testing.T) {
 			}},
 			args:    args{id: "missing"},
 			want:    "",
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -47,6 +47,8 @@ func TestInMemoryRepository_GetById(t *testing.T) {
 			got, err := repo.GetByID(tt.args.id)
 			if !tt.wantErr {
 				require.NoError(t, err)
+			} else {
+				assert.Error(t, err)
 			}
 			assert.Equal(t, tt.want, got)
 		})
