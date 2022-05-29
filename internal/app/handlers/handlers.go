@@ -2,26 +2,24 @@ package handlers
 
 import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
-	"strings"
 )
 
-func ShortenerHandler(service *services.Shortener) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			get(service, w, r)
-		case http.MethodPost:
-			add(service, w, r)
-		default:
-			http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
-			return
-		}
+type Handler struct {
+	Mux     *chi.Mux
+	service *services.Shortener
+}
+
+func NewHandler(service *services.Shortener) *Handler {
+	return &Handler{
+		Mux:     chi.NewMux(),
+		service: service,
 	}
 }
 
-func add(service *services.Shortener, w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	url, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -33,7 +31,7 @@ func add(service *services.Shortener, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	su, err := service.Shorten(string(url))
+	su, err := h.service.Shorten(string(url))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,13 +45,10 @@ func add(service *services.Shortener, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func get(service *services.Shortener, w http.ResponseWriter, r *http.Request) {
-	uID := strings.TrimPrefix(r.URL.Path, "/")
-	if uID == "" {
-		http.Error(w, "{id} required", http.StatusBadRequest)
-		return
-	}
-	fu, err := service.Expand(uID)
+func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
+	uID := chi.URLParam(r, "id")
+
+	fu, err := h.service.Expand(uID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

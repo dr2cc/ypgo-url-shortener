@@ -58,11 +58,11 @@ jobs:
         run: |
           shortenertest -test.v -test.run=^TestIteration2$ -source-path=.
 
-#      - name: "Code increment #3"
-#        if: always()
-#        run: |
-#          shortenertest -test.v -test.run=^TestIteration3$ -source-path=.
-#
+      - name: "Code increment #3"
+        if: always()
+        run: |
+          shortenertest -test.v -test.run=^TestIteration3$ -source-path=.
+
 #      - name: "Code increment #4"
 #        if: always()
 #        run: |
