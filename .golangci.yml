@@ -28,7 +28,6 @@ linters:
     - importas
     - ineffassign
     - maintidx
-    - maligned
     - nakedret
     - nestif
     - nilerr

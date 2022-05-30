@@ -12,7 +12,6 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

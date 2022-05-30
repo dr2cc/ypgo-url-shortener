@@ -25,10 +25,12 @@ func (HashGenerator) GenerateIDFromString(str string) (string, error) {
 
 func toBase62(id uint32) string {
 	var i big.Int
-	b := make([]byte, 8)
+	size := 8
+	b := make([]byte, size)
 	binary.LittleEndian.PutUint32(b, id)
 	i.SetBytes(b)
-	return i.Text(62)
+	base := 62
+	return i.Text(base)
 }
 
 func hashURL(url string) (uint32, error) {
