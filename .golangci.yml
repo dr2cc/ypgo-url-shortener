@@ -1,0 +1,45 @@
+linters:
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
+  enable:
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - cyclop
+    - deadcode
+    - depguard
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - gci
+    - gochecknoglobals
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godox
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomnd
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - maintidx
+    - maligned
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - prealloc
+    - staticcheck
+    - structcheck
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
