@@ -27,7 +27,7 @@ func toBase62(id uint32) string {
 	var i big.Int
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint32(b, id)
-	i.SetBytes(b[:])
+	i.SetBytes(b)
 	return i.Text(62)
 }
 

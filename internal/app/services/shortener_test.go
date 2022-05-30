@@ -2,10 +2,11 @@ package services
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestShortener_Expand(t *testing.T) {

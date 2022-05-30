@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"

@@ -9,25 +9,23 @@ type Config struct {
 
 func New() Config {
 	return Config{
-		Port: Port(),
-		Host: Host(),
+		Port: getPort(),
+		Host: getHost(),
 	}
 }
 
-func Port() string {
+func getPort() string {
 	p := os.Getenv("PORT")
 	if p == "" {
 		p = "8080"
 	}
-
 	return p
 }
 
-func Host() string {
+func getHost() string {
 	h := os.Getenv("HOST")
 	if h == "" {
 		h = "http://localhost"
 	}
-
 	return h
 }

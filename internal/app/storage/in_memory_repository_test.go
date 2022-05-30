@@ -1,14 +1,15 @@
 package storage
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestInMemoryRepository_GetById(t *testing.T) {
 	type fields struct {
-		storage storage
+		storage map[string]string
 	}
 	type args struct {
 		id string
@@ -57,7 +58,7 @@ func TestInMemoryRepository_GetById(t *testing.T) {
 
 func TestInMemoryRepository_Save(t *testing.T) {
 	type fields struct {
-		storage storage
+		storage map[string]string
 	}
 	type args struct {
 		url string
@@ -68,7 +69,7 @@ func TestInMemoryRepository_Save(t *testing.T) {
 		fields      fields
 		args        args
 		wantErr     bool
-		wantStorage storage
+		wantStorage map[string]string
 	}{
 		{
 			name:   "save new url with id",

@@ -1,11 +1,30 @@
 package handlers
 
 import (
-	"github.com/belamov/ypgo-url-shortener/internal/app/services"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+
+	"github.com/go-chi/chi/v5"
 )
+
+func NewRouter(service *services.Shortener) chi.Router {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Recoverer)
+
+	h := NewHandler(service)
+
+	r.Route("/", func(r chi.Router) {
+		r.Get("/{id}", h.Expand)
+		r.Post("/", h.Shorten)
+	})
+	return r
+}
 
 type Handler struct {
 	Mux     *chi.Mux
@@ -35,7 +54,6 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -48,14 +66,16 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	uID := chi.URLParam(r, "id")
 
-	fu, err := h.service.Expand(uID)
+	fullURL, err := h.service.Expand(uID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if fu == "" {
+
+	if fullURL == "" {
 		http.Error(w, "cant find full url", http.StatusNotFound)
 		return
 	}
-	http.Redirect(w, r, fu, http.StatusTemporaryRedirect)
+
+	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 }

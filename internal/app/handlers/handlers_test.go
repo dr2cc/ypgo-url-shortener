@@ -1,20 +1,20 @@
-package handlers_test
+package handlers
 
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"github.com/belamov/ypgo-url-shortener/internal/app/config"
-	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
-	"github.com/belamov/ypgo-url-shortener/internal/app/server"
-	"github.com/belamov/ypgo-url-shortener/internal/app/services"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/belamov/ypgo-url-shortener/internal/app/config"
+	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body string) (*http.Response, string) {
@@ -116,22 +116,20 @@ func TestHandler_Expand(t *testing.T) {
 			mockGen := new(mocks.MockGen)
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			s := server.New(cfg, service)
-			r := s.NewRouter()
+			r := NewRouter(service)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			result, body := testRequest(t, ts, tt.method, tt.request, "")
 			defer result.Body.Close()
 
-			fmt.Println(result)
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
 			assert.Equal(t, tt.want.body, body)
-
 		})
 	}
 }
+
 func TestHandler_Shorten(t *testing.T) {
 	type want struct {
 		statusCode int
@@ -197,18 +195,15 @@ func TestHandler_Shorten(t *testing.T) {
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			s := server.New(cfg, service)
-			r := s.NewRouter()
+			r := NewRouter(service)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			result, body := testRequest(t, ts, tt.method, tt.request, tt.body)
 			defer result.Body.Close()
 
-			fmt.Println(result)
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
-
 		})
 	}
 }

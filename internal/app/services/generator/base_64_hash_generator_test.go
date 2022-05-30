@@ -1,9 +1,10 @@
 package generator
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func Test_hashToBase62Generator_GenerateIdFromString(t *testing.T) {

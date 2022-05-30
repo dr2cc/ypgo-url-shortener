@@ -1,31 +1,46 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type InMemoryRepository struct {
-	storage storage
+	storage map[string]string
+	mutex   sync.RWMutex
 }
-
-type storage map[string]string
 
 func NewInMemoryRepository() *InMemoryRepository {
 	return &InMemoryRepository{
-		storage: make(storage),
+		storage: make(map[string]string),
+		mutex:   sync.RWMutex{},
 	}
 }
 
 func (repo *InMemoryRepository) Save(url string, id string) error {
-	if _, ok := repo.storage[id]; ok {
+	repo.mutex.RLock()
+	_, ok := repo.storage[id]
+	repo.mutex.RUnlock()
+
+	if ok {
 		return errors.New("not unique id")
 	}
+
+	repo.mutex.Lock()
 	repo.storage[id] = url
+	repo.mutex.Unlock()
+
 	return nil
 }
 
 func (repo *InMemoryRepository) GetByID(id string) (string, error) {
-	fu, ok := repo.storage[id]
+	repo.mutex.RLock()
+	url, ok := repo.storage[id]
+	repo.mutex.RUnlock()
+
 	if !ok {
 		return "", errors.New("can't find full url by id")
 	}
-	return fu, nil
+
+	return url, nil
 }
