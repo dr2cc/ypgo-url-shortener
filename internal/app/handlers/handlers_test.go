@@ -18,6 +18,8 @@ import (
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body string) (*http.Response, string) {
+	t.Helper()
+
 	var err error
 	var req *http.Request
 	var resp *http.Response

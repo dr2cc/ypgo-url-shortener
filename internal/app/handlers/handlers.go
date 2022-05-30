@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 
-	"github.com/go-chi/chi/v5/middleware"
-
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func NewRouter(service *services.Shortener) chi.Router {
