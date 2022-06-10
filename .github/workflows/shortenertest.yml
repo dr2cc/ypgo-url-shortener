@@ -10,7 +10,7 @@ jobs:
 
   shortenertest:
     runs-on: ubuntu-latest
-    container: golang:1.17
+    container: golang:1.18
 
     services:
       postgres:
@@ -63,13 +63,13 @@ jobs:
         run: |
           shortenertest -test.v -test.run=^TestIteration3$ -source-path=.
 
-#      - name: "Code increment #4"
-#        if: always()
-#        run: |
-#          shortenertest -test.v -test.run=^TestIteration4$ \
-#              -source-path=. \
-#              -binary-path=cmd/shortener/shortener
-#
+      - name: "Code increment #4"
+        if: always()
+        run: |
+          shortenertest -test.v -test.run=^TestIteration4$ \
+              -source-path=. \
+              -binary-path=cmd/shortener/shortener
+
 #      - name: "Code increment #5"
 #        if: always()
 #        run: |
