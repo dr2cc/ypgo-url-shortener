@@ -1,6 +1,7 @@
 package requests
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -46,8 +47,9 @@ func TestShortenUrlRequest_unmarshalling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var result ShortenUrlRequest
-			err := json.Unmarshal([]byte(tt.json), &result)
-			assert.NoError(t, err)
+			buf := bytes.NewBuffer([]byte(tt.json))
+			encoder := json.NewDecoder(buf)
+			encoder.Decode(&result)
 			assert.ObjectsAreEqual(tt.request, result)
 		})
 	}
