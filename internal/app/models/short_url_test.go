@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestShortUrl_GetShortUrl(t *testing.T) {
+func TestShortURL_GetShortURL(t *testing.T) {
 	type fields struct {
 		OriginalURL string
-		Id          string
+		ID          string
 	}
 	cfg := config.New()
 	tests := []struct {
@@ -22,7 +22,7 @@ func TestShortUrl_GetShortUrl(t *testing.T) {
 		{
 			name: "it correctly generates short url",
 			fields: fields{
-				Id: "id",
+				ID: "id",
 			},
 			want: fmt.Sprintf("%s:%s/id", cfg.Host, cfg.Port),
 		},
@@ -31,12 +31,12 @@ func TestShortUrl_GetShortUrl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := ShortURL{
 				OriginalURL: tt.fields.OriginalURL,
-				Id:          tt.fields.Id,
+				ID:          tt.fields.ID,
 			}
 
-			shortUrl := s.GetShortUrl()
+			shortURL := s.GetShortURL()
 
-			assert.Equal(t, tt.want, shortUrl)
+			assert.Equal(t, tt.want, shortURL)
 		})
 	}
 }

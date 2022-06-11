@@ -69,7 +69,7 @@ func TestShortener_Shorten(t *testing.T) {
 			args: args{url: "url"},
 			want: &models.ShortURL{
 				OriginalURL: "url",
-				Id:          "id",
+				ID:          "id",
 			},
 			wantErr: false,
 		},

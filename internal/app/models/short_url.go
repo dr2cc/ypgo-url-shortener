@@ -8,10 +8,10 @@ import (
 
 type ShortURL struct {
 	OriginalURL string `json:"url,omitempty"`
-	Id          string `json:"result,omitempty"`
+	ID          string `json:"result,omitempty"`
 }
 
-func (s ShortURL) GetShortUrl() string {
+func (s ShortURL) GetShortURL() string {
 	cfg := config.New()
-	return fmt.Sprintf("%s:%s/%s", cfg.Host, cfg.Port, s.Id)
+	return fmt.Sprintf("%s:%s/%s", cfg.Host, cfg.Port, s.ID)
 }

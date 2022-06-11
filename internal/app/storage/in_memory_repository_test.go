@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInMemoryRepository_GetById(t *testing.T) {
+func TestInMemoryRepository_GetByID(t *testing.T) {
 	type fields struct {
 		storage map[string]string
 	}

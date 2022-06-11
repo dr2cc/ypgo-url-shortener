@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestShortenUrlRequest_validation(t *testing.T) {
+func TestShortenURLRequest_validation(t *testing.T) {
 	tests := []struct {
 		name    string
-		request *ShortenUrlRequest
+		request *ShortenURLRequest
 	}{
 		{
 			name:    "it validates that original url is present",
-			request: &ShortenUrlRequest{},
+			request: &ShortenURLRequest{},
 		},
 	}
 	for _, tt := range tests {
@@ -27,26 +27,26 @@ func TestShortenUrlRequest_validation(t *testing.T) {
 	}
 }
 
-func TestShortenUrlRequest_unmarshalling(t *testing.T) {
+func TestShortenURLRequest_unmarshalling(t *testing.T) {
 	tests := []struct {
 		name    string
 		json    string
-		request *ShortenUrlRequest
+		request *ShortenURLRequest
 	}{
 		{
 			name:    "it unmarshalls json #1",
 			json:    "{\"url\":\"url\"}",
-			request: &ShortenUrlRequest{OriginalUrl: "url"},
+			request: &ShortenURLRequest{OriginalURL: "url"},
 		},
 		{
 			name:    "it unmarshalls json #2",
 			json:    "{\"url\":\"\"}",
-			request: &ShortenUrlRequest{OriginalUrl: ""},
+			request: &ShortenURLRequest{OriginalURL: ""},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var result ShortenUrlRequest
+			var result ShortenURLRequest
 			buf := bytes.NewBuffer([]byte(tt.json))
 			encoder := json.NewDecoder(buf)
 			encoder.Decode(&result)

@@ -6,14 +6,14 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
-type ShortUrlResponse struct {
+type ShortURLResponse struct {
 	Result string `json:"result"`
 }
 
-func NewShortUrlResponse(model models.ShortURL) *ShortUrlResponse {
-	return &ShortUrlResponse{Result: model.GetShortUrl()}
+func NewShortURLResponse(model models.ShortURL) *ShortURLResponse {
+	return &ShortURLResponse{Result: model.GetShortURL()}
 }
 
-func (sur *ShortUrlResponse) Render(w http.ResponseWriter, r *http.Request) error {
+func (sur *ShortURLResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

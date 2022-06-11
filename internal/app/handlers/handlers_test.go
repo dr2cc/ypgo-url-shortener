@@ -211,7 +211,7 @@ func TestHandler_Shorten(t *testing.T) {
 	}
 }
 
-func TestHandler_ShortenApi(t *testing.T) {
+func TestHandler_ShortenAPI(t *testing.T) {
 	type want struct {
 		statusCode int
 		response   render.Renderer
@@ -222,16 +222,16 @@ func TestHandler_ShortenApi(t *testing.T) {
 		want    want
 		Req     string
 		method  string
-		request requests.ShortenUrlRequest
+		request requests.ShortenURLRequest
 	}{
 		{
 			name: "post with url",
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   responses.NewShortUrlResponse(models.ShortURL{Id: "id"}),
+				response:   responses.NewShortURLResponse(models.ShortURL{ID: "id"}),
 			},
 			method:  http.MethodPost,
-			request: requests.ShortenUrlRequest{OriginalUrl: "url"},
+			request: requests.ShortenURLRequest{OriginalURL: "url"},
 		},
 		{
 			name: "post without url",
@@ -240,7 +240,7 @@ func TestHandler_ShortenApi(t *testing.T) {
 				response:   responses.ErrInvalidRequest(errors.New("missing required url field")),
 			},
 			method:  http.MethodPost,
-			request: requests.ShortenUrlRequest{},
+			request: requests.ShortenURLRequest{},
 		},
 		{
 			name: "it returns 500 when service fails on shortening",
@@ -249,13 +249,13 @@ func TestHandler_ShortenApi(t *testing.T) {
 				response:   responses.ErrInternal(errors.New("err")),
 			},
 			method:  http.MethodPost,
-			request: requests.ShortenUrlRequest{OriginalUrl: "error_on_shortening"},
+			request: requests.ShortenURLRequest{OriginalURL: "error_on_shortening"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", tt.request.OriginalUrl, "id").Return(nil)
+			mockRepo.On("Save", tt.request.OriginalURL, "id").Return(nil)
 
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
@@ -269,10 +269,10 @@ func TestHandler_ShortenApi(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			bodyJson, err := json.Marshal(tt.request)
+			bodyJSON, err := json.Marshal(tt.request)
 			require.NoError(t, err)
 
-			result, body := testRequest(t, ts, tt.method, "/api/shorten", string(bodyJson))
+			result, body := testRequest(t, ts, tt.method, "/api/shorten", string(bodyJSON))
 			defer result.Body.Close()
 
 			expectedResponse, err := json.Marshal(tt.want.response)

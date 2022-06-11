@@ -34,7 +34,7 @@ func (service *Shortener) Shorten(url string) (models.ShortURL, error) {
 
 	return models.ShortURL{
 		OriginalURL: url,
-		Id:          urlID,
+		ID:          urlID,
 	}, nil
 }
 

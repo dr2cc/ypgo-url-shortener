@@ -5,12 +5,12 @@ import (
 	"net/http"
 )
 
-type ShortenUrlRequest struct {
-	OriginalUrl string `json:"url,omitempty"`
+type ShortenURLRequest struct {
+	OriginalURL string `json:"url,omitempty"`
 }
 
-func (su *ShortenUrlRequest) Bind(r *http.Request) error {
-	if su.OriginalUrl == "" {
+func (su *ShortenURLRequest) Bind(r *http.Request) error {
+	if su.OriginalURL == "" {
 		return errors.New("missing required url field")
 	}
 

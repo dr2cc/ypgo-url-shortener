@@ -23,7 +23,7 @@ func NewRouter(service *services.Shortener) chi.Router {
 	r.Route("/", func(r chi.Router) {
 		r.Get("/{id}", h.Expand)
 		r.Post("/", h.Shorten)
-		r.Post("/api/shorten", h.ShortenApi)
+		r.Post("/api/shorten", h.ShortenAPI)
 	})
 	return r
 }
@@ -59,7 +59,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(su.GetShortUrl()))
+	_, err = w.Write([]byte(su.GetShortURL()))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -82,14 +82,14 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 }
 
-func (h *Handler) ShortenApi(w http.ResponseWriter, r *http.Request) {
-	data := &requests.ShortenUrlRequest{}
+func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
+	data := &requests.ShortenURLRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, responses.ErrInvalidRequest(err))
 		return
 	}
 
-	url := data.OriginalUrl
+	url := data.OriginalURL
 
 	su, err := h.service.Shorten(url)
 	if err != nil {
@@ -98,5 +98,5 @@ func (h *Handler) ShortenApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, responses.NewShortUrlResponse(su))
+	render.Render(w, r, responses.NewShortURLResponse(su))
 }

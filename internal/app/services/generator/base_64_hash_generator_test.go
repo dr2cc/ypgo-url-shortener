@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_hashToBase62Generator_GenerateIdFromString(t *testing.T) {
+func Test_hashToBase62Generator_GenerateIDdFromString(t *testing.T) {
 	type args struct {
 		str string
 	}
