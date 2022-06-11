@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -11,7 +12,11 @@ import (
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+	"github.com/belamov/ypgo-url-shortener/internal/app/requests"
+	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/go-chi/render"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,6 +31,8 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 
 	req, err = http.NewRequest(method, ts.URL+path, strings.NewReader(body))
 	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -137,11 +144,10 @@ func TestHandler_Shorten(t *testing.T) {
 		body       string
 	}
 	tests := []struct {
-		name    string
-		request string
-		want    want
-		body    string
-		method  string
+		name   string
+		want   want
+		body   string
+		method string
 	}{
 		{
 			name: "post with location",
@@ -149,9 +155,8 @@ func TestHandler_Shorten(t *testing.T) {
 				statusCode: http.StatusCreated,
 				body:       "http://localhost:8080/id",
 			},
-			request: "/",
-			method:  http.MethodPost,
-			body:    "url",
+			method: http.MethodPost,
+			body:   "url",
 		},
 		{
 			name: "post without location",
@@ -159,9 +164,8 @@ func TestHandler_Shorten(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				body:       "url required",
 			},
-			request: "/",
-			method:  http.MethodPost,
-			body:    "",
+			method: http.MethodPost,
+			body:   "",
 		},
 		{
 			name: "not supported method",
@@ -169,9 +173,8 @@ func TestHandler_Shorten(t *testing.T) {
 				statusCode: http.StatusMethodNotAllowed,
 				body:       "",
 			},
-			request: "/",
-			method:  http.MethodGet,
-			body:    "",
+			method: http.MethodGet,
+			body:   "",
 		},
 		{
 			name: "it returns 500 when service fails on shortening",
@@ -179,9 +182,8 @@ func TestHandler_Shorten(t *testing.T) {
 				statusCode: http.StatusInternalServerError,
 				body:       "err",
 			},
-			request: "/",
-			method:  http.MethodPost,
-			body:    "error_on_shortening",
+			method: http.MethodPost,
+			body:   "error_on_shortening",
 		},
 	}
 	for _, tt := range tests {
@@ -200,11 +202,83 @@ func TestHandler_Shorten(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			result, body := testRequest(t, ts, tt.method, tt.request, tt.body)
+			result, body := testRequest(t, ts, tt.method, "/", tt.body)
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
+		})
+	}
+}
+
+func TestHandler_ShortenApi(t *testing.T) {
+	type want struct {
+		statusCode int
+		response   render.Renderer
+	}
+
+	tests := []struct {
+		name    string
+		want    want
+		Req     string
+		method  string
+		request requests.ShortenUrlRequest
+	}{
+		{
+			name: "post with url",
+			want: want{
+				statusCode: http.StatusCreated,
+				response:   responses.NewShortUrlResponse(models.ShortURL{Id: "id"}),
+			},
+			method:  http.MethodPost,
+			request: requests.ShortenUrlRequest{OriginalUrl: "url"},
+		},
+		{
+			name: "post without url",
+			want: want{
+				statusCode: http.StatusBadRequest,
+				response:   responses.ErrInvalidRequest(errors.New("missing required url field")),
+			},
+			method:  http.MethodPost,
+			request: requests.ShortenUrlRequest{},
+		},
+		{
+			name: "it returns 500 when service fails on shortening",
+			want: want{
+				statusCode: http.StatusInternalServerError,
+				response:   responses.ErrInternal(errors.New("err")),
+			},
+			method:  http.MethodPost,
+			request: requests.ShortenUrlRequest{OriginalUrl: "error_on_shortening"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockRepo)
+			mockRepo.On("Save", tt.request.OriginalUrl, "id").Return(nil)
+
+			mockGen := new(mocks.MockGen)
+			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
+			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
+			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
+
+			cfg := config.New()
+
+			service := services.New(mockRepo, mockGen, cfg)
+			r := NewRouter(service)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			bodyJson, err := json.Marshal(tt.request)
+			require.NoError(t, err)
+
+			result, body := testRequest(t, ts, tt.method, "/api/shorten", string(bodyJson))
+			defer result.Body.Close()
+
+			expectedResponse, err := json.Marshal(tt.want.response)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, string(expectedResponse), body)
 		})
 	}
 }

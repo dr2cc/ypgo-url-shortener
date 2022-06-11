@@ -1,9 +1,8 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
@@ -22,19 +21,21 @@ func New(repository storage.Repository, generator generator.Generator, config co
 	}
 }
 
-func (service *Shortener) Shorten(url string) (string, error) {
+func (service *Shortener) Shorten(url string) (models.ShortURL, error) {
 	urlID, err := service.generator.GenerateIDFromString(url)
 	if err != nil {
-		return "", err
+		return models.ShortURL{}, err
 	}
 
 	err = service.repository.Save(url, urlID)
 	if err != nil {
-		return "", err
+		return models.ShortURL{}, err
 	}
 
-	result := fmt.Sprintf("%s:%s/%s", service.config.Host, service.config.Port, urlID)
-	return result, nil
+	return models.ShortURL{
+		OriginalURL: url,
+		Id:          urlID,
+	}, nil
 }
 
 func (service *Shortener) Expand(id string) (string, error) {

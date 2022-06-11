@@ -6,6 +6,7 @@ import (
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,25 +61,28 @@ func TestShortener_Shorten(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    string
+		want    *models.ShortURL
 		wantErr bool
 	}{
 		{
-			name:    "generate short link from url",
-			args:    args{url: "url"},
-			want:    "http://localhost:8080/id",
+			name: "generate short link from url",
+			args: args{url: "url"},
+			want: &models.ShortURL{
+				OriginalURL: "url",
+				Id:          "id",
+			},
 			wantErr: false,
 		},
 		{
 			name:    "generate short link from empty url",
 			args:    args{url: ""},
-			want:    "",
+			want:    &models.ShortURL{},
 			wantErr: true,
 		},
 		{
 			name:    "generate short link from url when saving failes",
 			args:    args{url: "fail"},
-			want:    "",
+			want:    &models.ShortURL{},
 			wantErr: true,
 		},
 	}
@@ -105,7 +109,7 @@ func TestShortener_Shorten(t *testing.T) {
 			if !tt.wantErr {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.want, got)
+			assert.ObjectsAreEqual(tt.want, got)
 		})
 	}
 }

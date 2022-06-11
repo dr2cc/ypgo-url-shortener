@@ -4,9 +4,12 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/belamov/ypgo-url-shortener/internal/app/requests"
+	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 )
 
 func NewRouter(service *services.Shortener) chi.Router {
@@ -20,6 +23,7 @@ func NewRouter(service *services.Shortener) chi.Router {
 	r.Route("/", func(r chi.Router) {
 		r.Get("/{id}", h.Expand)
 		r.Post("/", h.Shorten)
+		r.Post("/api/shorten", h.ShortenApi)
 	})
 	return r
 }
@@ -55,7 +59,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(su))
+	_, err = w.Write([]byte(su.GetShortUrl()))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -76,4 +80,23 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) ShortenApi(w http.ResponseWriter, r *http.Request) {
+	data := &requests.ShortenUrlRequest{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, responses.ErrInvalidRequest(err))
+		return
+	}
+
+	url := data.OriginalUrl
+
+	su, err := h.service.Shorten(url)
+	if err != nil {
+		render.Render(w, r, responses.ErrInternal(err))
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Render(w, r, responses.NewShortUrlResponse(su))
 }
