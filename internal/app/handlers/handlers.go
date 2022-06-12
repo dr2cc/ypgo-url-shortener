@@ -85,7 +85,7 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	data := &requests.ShortenURLRequest{}
 	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, responses.ErrInvalidRequest(err))
+		err = render.Render(w, r, responses.ErrInvalidRequest(err))
 		return
 	}
 
@@ -93,10 +93,10 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 
 	su, err := h.service.Shorten(url)
 	if err != nil {
-		render.Render(w, r, responses.ErrInternal(err))
+		err = render.Render(w, r, responses.ErrInternal(err))
 		return
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, responses.NewShortURLResponse(su))
+	err = render.Render(w, r, responses.NewShortURLResponse(su))
 }

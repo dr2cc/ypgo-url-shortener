@@ -49,7 +49,8 @@ func TestShortenURLRequest_unmarshalling(t *testing.T) {
 			var result ShortenURLRequest
 			buf := bytes.NewBuffer([]byte(tt.json))
 			encoder := json.NewDecoder(buf)
-			encoder.Decode(&result)
+			err := encoder.Decode(&result)
+			assert.NoError(t, err)
 			assert.ObjectsAreEqual(tt.request, result)
 		})
 	}
