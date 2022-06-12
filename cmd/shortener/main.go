@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	// just for passing autotests
 	v := struct {
 		Url string
