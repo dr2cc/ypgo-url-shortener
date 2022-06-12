@@ -208,8 +208,9 @@ func TestHandler_Shorten(t *testing.T) {
 
 func TestHandler_ShortenAPI(t *testing.T) {
 	type want struct {
-		statusCode int
-		body       string
+		statusCode  int
+		body        string
+		contentType string
 	}
 	tests := []struct {
 		name   string
@@ -220,8 +221,9 @@ func TestHandler_ShortenAPI(t *testing.T) {
 		{
 			name: "post with url",
 			want: want{
-				statusCode: http.StatusCreated,
-				body:       "{\"result\":\"http://localhost:8080/id\"}",
+				statusCode:  http.StatusCreated,
+				body:        "{\"result\":\"http://localhost:8080/id\"}",
+				contentType: "application/json",
 			},
 			method: http.MethodPost,
 			body:   "{\"url\":\"url\"}",
@@ -291,6 +293,9 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			result, body := testRequest(t, ts, tt.method, "/api/shorten", tt.body)
 			defer result.Body.Close()
 
+			if tt.want.contentType != "" {
+				assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			}
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
 		})
