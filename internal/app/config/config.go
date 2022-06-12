@@ -37,7 +37,7 @@ func getServerAddress() string {
 func getBaseURL() string {
 	v := os.Getenv("BASE_URL")
 	if v == "" {
-		v = "http://localhost:8080/"
+		v = "http://localhost:8080"
 	}
 	return v
 }

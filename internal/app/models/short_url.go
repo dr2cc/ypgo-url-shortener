@@ -13,5 +13,5 @@ type ShortURL struct {
 
 func (s ShortURL) GetShortURL() string {
 	cfg := config.New()
-	return fmt.Sprintf("%s%s", cfg.BaseURL, s.ID)
+	return fmt.Sprintf("%s/%s", cfg.BaseURL, s.ID)
 }
