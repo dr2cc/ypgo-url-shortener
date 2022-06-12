@@ -21,14 +21,6 @@ func getServerAddress() string {
 	if v == "" {
 		v = ":8080"
 	}
-	//ln, err := net.Listen("tcp", v)
-	//
-	//if err != nil {
-	//	fmt.Printf("Can't listen on port %q: %s", v, err)
-	//	os.Exit(1)
-	//}
-	//
-	//_ = ln.Close()
 	return v
 }
 
