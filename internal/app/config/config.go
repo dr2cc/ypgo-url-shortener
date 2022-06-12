@@ -3,29 +3,29 @@ package config
 import "os"
 
 type Config struct {
-	Port string
-	Host string
+	BaseUrl       string
+	ServerAddress string
 }
 
 func New() Config {
 	return Config{
-		Port: getPort(),
-		Host: getHost(),
+		ServerAddress: getServerAddress(),
+		BaseUrl:       getBaseUrl(),
 	}
 }
 
-func getPort() string {
-	p := os.Getenv("PORT")
-	if p == "" {
-		p = "8080"
+func getServerAddress() string {
+	v := os.Getenv("SERVER_ADDRESS")
+	if v == "" {
+		v = "http://localhost:8080"
 	}
-	return p
+	return v
 }
 
-func getHost() string {
-	h := os.Getenv("HOST")
-	if h == "" {
-		h = "http://localhost"
+func getBaseUrl() string {
+	v := os.Getenv("BASE_URL")
+	if v == "" {
+		v = "http://localhost:8080/"
 	}
-	return h
+	return v
 }

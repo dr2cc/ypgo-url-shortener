@@ -24,7 +24,7 @@ func TestShortURL_GetShortURL(t *testing.T) {
 			fields: fields{
 				ID: "id",
 			},
-			want: fmt.Sprintf("%s:%s/id", cfg.Host, cfg.Port),
+			want: fmt.Sprintf("%sid", cfg.BaseUrl),
 		},
 	}
 	for _, tt := range tests {

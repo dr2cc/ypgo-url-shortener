@@ -18,7 +18,7 @@ func (s *Server) Run() {
 	r := handlers.NewRouter(s.service)
 
 	httpServer := &http.Server{
-		Addr:    ":" + s.config.Port,
+		Addr:    s.config.ServerAddress,
 		Handler: r,
 	}
 	log.Fatal(httpServer.ListenAndServe())
