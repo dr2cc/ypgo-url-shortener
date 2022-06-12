@@ -15,9 +15,9 @@ import (
 func main() {
 	// just for passing autotests
 	v := struct {
-		Url string
+		URL string
 	}{
-		Url: "http://mysite.com?id=1234&param=2",
+		URL: "http://mysite.com?id=1234&param=2",
 	}
 	buf := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(buf)
