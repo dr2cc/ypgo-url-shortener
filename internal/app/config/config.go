@@ -17,7 +17,7 @@ func New() Config {
 func getServerAddress() string {
 	v := os.Getenv("SERVER_ADDRESS")
 	if v == "" {
-		v = "http://localhost:8080"
+		v = "localhost:8080"
 	}
 	return v
 }
