@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -12,11 +11,7 @@ import (
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
-	"github.com/belamov/ypgo-url-shortener/internal/app/models"
-	"github.com/belamov/ypgo-url-shortener/internal/app/requests"
-	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
-	"github.com/go-chi/render"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,7 +145,7 @@ func TestHandler_Shorten(t *testing.T) {
 		method string
 	}{
 		{
-			name: "post with location",
+			name: "post with url",
 			want: want{
 				statusCode: http.StatusCreated,
 				body:       "http://localhost:8080/id",
@@ -159,7 +154,7 @@ func TestHandler_Shorten(t *testing.T) {
 			body:   "url",
 		},
 		{
-			name: "post without location",
+			name: "post without url",
 			want: want{
 				statusCode: http.StatusBadRequest,
 				body:       "url required",
@@ -189,7 +184,7 @@ func TestHandler_Shorten(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", tt.body, "id").Return(nil)
+			mockRepo.On("Save", "url", "id").Return(nil)
 
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
@@ -214,48 +209,73 @@ func TestHandler_Shorten(t *testing.T) {
 func TestHandler_ShortenAPI(t *testing.T) {
 	type want struct {
 		statusCode int
-		response   render.Renderer
+		body       string
 	}
-
 	tests := []struct {
-		name    string
-		want    want
-		Req     string
-		method  string
-		request requests.ShortenURLRequest
+		name   string
+		want   want
+		body   string
+		method string
 	}{
 		{
 			name: "post with url",
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   responses.NewShortURLResponse(models.ShortURL{ID: "id"}),
+				body:       "{\"result\":\"http://localhost:8080/id\"}",
 			},
-			method:  http.MethodPost,
-			request: requests.ShortenURLRequest{OriginalURL: "url"},
+			method: http.MethodPost,
+			body:   "{\"url\":\"url\"}",
 		},
 		{
 			name: "post without url",
 			want: want{
 				statusCode: http.StatusBadRequest,
-				response:   responses.ErrInvalidRequest(errors.New("missing required url field")),
+				body:       "url required",
 			},
-			method:  http.MethodPost,
-			request: requests.ShortenURLRequest{},
+			method: http.MethodPost,
+			body:   "{\"url\":\"\"}",
+		},
+		{
+			name: "post without url param",
+			want: want{
+				statusCode: http.StatusBadRequest,
+				body:       "url required",
+			},
+			method: http.MethodPost,
+			body:   "{\"some param\":\"some value\"}",
+		},
+		{
+			name: "post without json",
+			want: want{
+				statusCode: http.StatusBadRequest,
+				body:       "cannot decode json",
+			},
+			method: http.MethodPost,
+			body:   "url",
+		},
+		{
+			name: "not supported method",
+			want: want{
+				statusCode: http.StatusMethodNotAllowed,
+				body:       "",
+			},
+			method: http.MethodGet,
+			body:   "",
 		},
 		{
 			name: "it returns 500 when service fails on shortening",
 			want: want{
 				statusCode: http.StatusInternalServerError,
-				response:   responses.ErrInternal(errors.New("err")),
+				body:       "err",
 			},
-			method:  http.MethodPost,
-			request: requests.ShortenURLRequest{OriginalURL: "error_on_shortening"},
+			method: http.MethodPost,
+			body:   "{\"url\":\"error_on_shortening\"}",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", tt.request.OriginalURL, "id").Return(nil)
+			mockRepo.On("Save", "url", "id").Return(nil)
 
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
@@ -263,22 +283,16 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
 			cfg := config.New()
-
 			service := services.New(mockRepo, mockGen, cfg)
 			r := NewRouter(service)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			bodyJSON, err := json.Marshal(tt.request)
-			require.NoError(t, err)
-
-			result, body := testRequest(t, ts, tt.method, "/api/shorten", string(bodyJSON))
+			result, body := testRequest(t, ts, tt.method, "/api/shorten", tt.body)
 			defer result.Body.Close()
 
-			expectedResponse, err := json.Marshal(tt.want.response)
-			assert.NoError(t, err)
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-			assert.Equal(t, string(expectedResponse), body)
+			assert.Equal(t, tt.want.body, body)
 		})
 	}
 }

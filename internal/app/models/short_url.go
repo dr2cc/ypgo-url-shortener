@@ -7,8 +7,8 @@ import (
 )
 
 type ShortURL struct {
-	OriginalURL string `json:"url,omitempty"`
-	ID          string `json:"result,omitempty"`
+	OriginalURL string `json:"url"`
+	ID          string `json:"-"`
 }
 
 func (s ShortURL) GetShortURL() string {

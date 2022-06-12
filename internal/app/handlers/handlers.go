@@ -1,15 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
-	"github.com/belamov/ypgo-url-shortener/internal/app/requests"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
 )
 
 func NewRouter(service *services.Shortener) chi.Router {
@@ -83,20 +83,35 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
-	data := &requests.ShortenURLRequest{}
-	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, responses.ErrInvalidRequest(err)) // nolint:errcheck
+	var v models.ShortURL
+
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		http.Error(w, "cannot decode json", http.StatusBadRequest)
 		return
 	}
 
-	url := data.OriginalURL
+	if v.OriginalURL == "" {
+		http.Error(w, "url required", http.StatusBadRequest)
+		return
+	}
 
-	su, err := h.service.Shorten(url)
+	su, err := h.service.Shorten(v.OriginalURL)
 	if err != nil {
-		render.Render(w, r, responses.ErrInternal(err)) // nolint:errcheck
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	render.Status(r, http.StatusCreated)
-	render.Render(w, r, responses.NewShortURLResponse(su)) // nolint:errcheck
+	res := responses.ShorteningResult{Result: su.GetShortURL()}
+
+	out, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	_, err = w.Write(out)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
