@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/server"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 
-	//just for passing autotests
+	// just for passing autotests
 	v := struct {
 		Url string
 	}{
@@ -22,7 +23,10 @@ func main() {
 	buf := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(buf)
 	encoder.SetEscapeHTML(false) // без этой опции символ '&' будет заменён на "\u0026"
-	encoder.Encode(v)
+	err := encoder.Encode(v)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(buf.String())
 
 	cfg := config.New()
