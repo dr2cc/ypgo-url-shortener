@@ -10,7 +10,7 @@ import (
 )
 
 type Server struct {
-	config  config.Config
+	config  *config.Config
 	service *services.Shortener
 }
 
@@ -24,7 +24,7 @@ func (s *Server) Run() {
 	log.Fatal(httpServer.ListenAndServe())
 }
 
-func New(config config.Config, service *services.Shortener) *Server {
+func New(config *config.Config, service *services.Shortener) *Server {
 	return &Server{
 		config:  config,
 		service: service,

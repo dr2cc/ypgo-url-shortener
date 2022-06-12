@@ -10,10 +10,10 @@ import (
 type Shortener struct {
 	repository storage.Repository
 	generator  generator.Generator
-	config     config.Config
+	config     *config.Config
 }
 
-func New(repository storage.Repository, generator generator.Generator, config config.Config) *Shortener {
+func New(repository storage.Repository, generator generator.Generator, config *config.Config) *Shortener {
 	return &Shortener{
 		repository: repository,
 		generator:  generator,

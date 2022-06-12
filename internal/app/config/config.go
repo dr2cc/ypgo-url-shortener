@@ -9,8 +9,8 @@ type Config struct {
 	ServerAddress string
 }
 
-func New() Config {
-	return Config{
+func New() *Config {
+	return &Config{
 		ServerAddress: getServerAddress(),
 		BaseURL:       getBaseURL(),
 	}
