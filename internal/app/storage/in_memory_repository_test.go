@@ -31,7 +31,7 @@ func TestInMemoryRepository_GetByID(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "get missing url",
+			name: "get missing id",
 			fields: fields{storage: map[string]string{
 				"id": "some url",
 			}},
@@ -81,7 +81,7 @@ func TestInMemoryRepository_Save(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "save new url with id",
+			name: "save new url with same id",
 			fields: fields{
 				storage: map[string]string{
 					"id": "some url",

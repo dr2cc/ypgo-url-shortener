@@ -7,12 +7,14 @@ import (
 type Config struct {
 	BaseURL       string
 	ServerAddress string
+	FilePath      string
 }
 
 func New() *Config {
 	return &Config{
 		ServerAddress: getServerAddress(),
 		BaseURL:       getBaseURL(),
+		FilePath:      os.Getenv("FILE_STORAGE_PATH"),
 	}
 }
 

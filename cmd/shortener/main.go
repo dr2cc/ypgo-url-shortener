@@ -10,8 +10,8 @@ import (
 
 func main() {
 	cfg := config.New()
-	repo := storage.NewInMemoryRepository()
 	gen := &generator.HashGenerator{}
+	repo := storage.GetRepo(cfg)
 	service := services.New(repo, gen, cfg)
 	srv := server.New(cfg, service)
 
