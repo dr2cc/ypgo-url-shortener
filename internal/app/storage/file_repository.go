@@ -34,12 +34,12 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 }
 
 func (repo *FileRepository) Save(url string, id string) error {
-	shortUrl := models.ShortURL{
+	shortURL := models.ShortURL{
 		OriginalURL: url,
 		ID:          id,
 	}
 
-	data, err := json.Marshal(&shortUrl)
+	data, err := json.Marshal(&shortURL)
 	if err != nil {
 		return err
 	}

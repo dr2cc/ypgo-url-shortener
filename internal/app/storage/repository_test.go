@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
-
 	"github.com/stretchr/testify/assert"
 )
 

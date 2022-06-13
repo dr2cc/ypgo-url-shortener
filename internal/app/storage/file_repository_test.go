@@ -111,14 +111,14 @@ func TestFileRepository_Save(t *testing.T) {
 			err := repo.Save(tt.args.url, tt.args.id)
 			if tt.wantErr {
 				assert.Error(t, err)
-				savedUrl, err := repo.GetByID(tt.args.id)
+				savedURL, err := repo.GetByID(tt.args.id)
 				assert.NoError(t, err)
-				assert.NotEqual(t, tt.wantSaved, savedUrl)
+				assert.NotEqual(t, tt.wantSaved, savedURL)
 			} else {
 				assert.NoError(t, err)
-				savedUrl, err := repo.GetByID(tt.args.id)
+				savedURL, err := repo.GetByID(tt.args.id)
 				assert.NoError(t, err)
-				assert.Equal(t, tt.wantSaved, savedUrl)
+				assert.Equal(t, tt.wantSaved, savedURL)
 			}
 		})
 	}
