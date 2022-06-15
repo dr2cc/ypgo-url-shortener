@@ -18,16 +18,14 @@ func NewRouter(service *services.Shortener) chi.Router {
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(flate.BestSpeed))
 
 	h := NewHandler(service)
 
 	r.Route("/", func(r chi.Router) {
 		r.Get("/{id}", h.Expand)
-		r.Route("/", func(r chi.Router) {
-			r.Use(middleware.Compress(flate.BestSpeed))
-			r.Post("/", h.Shorten)
-			r.Post("/api/shorten", h.ShortenAPI)
-		})
+		r.Post("/", h.Shorten)
+		r.Post("/api/shorten", h.ShortenAPI)
 	})
 	return r
 }
@@ -83,6 +81,8 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cant find full url", http.StatusNotFound)
 		return
 	}
+
+	w.Header().Set("Content-Type", "text/html")
 
 	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 }
