@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/server"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
@@ -10,10 +12,10 @@ import (
 
 func main() {
 	cfg := config.New()
-	err := cfg.Init()
-	if err != nil {
-		panic(err)
-	}
+
+	cfg.Init()
+	flag.Parse()
+
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
 	service := services.New(repo, gen, cfg)

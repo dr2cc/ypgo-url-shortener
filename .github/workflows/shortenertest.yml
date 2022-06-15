@@ -92,17 +92,17 @@ jobs:
               -file-storage-path=$TEMP_FILE \
               -source-path=.
 
-#      - name: "Code increment #7"
-#        if: always()
-#        run: |
-#          SERVER_PORT=$(random unused-port)
-#          TEMP_FILE=$(random tempfile)
-#          shortenertest -test.v -test.run=^TestIteration7$ \
-#              -binary-path=cmd/shortener/shortener \
-#              -server-port=$SERVER_PORT \
-#              -file-storage-path=$TEMP_FILE \
-#              -source-path=.
-#
+      - name: "Code increment #7"
+        if: always()
+        run: |
+          SERVER_PORT=$(random unused-port)
+          TEMP_FILE=$(random tempfile)
+          shortenertest -test.v -test.run=^TestIteration7$ \
+              -binary-path=cmd/shortener/shortener \
+              -server-port=$SERVER_PORT \
+              -file-storage-path=$TEMP_FILE \
+              -source-path=.
+
 #      - name: "Code increment #8"
 #        if: always()
 #        run: |
