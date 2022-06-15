@@ -60,6 +60,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(su.GetShortURL()))
 	if err != nil {
