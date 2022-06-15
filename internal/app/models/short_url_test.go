@@ -32,6 +32,7 @@ func TestShortURL_GetShortURL(t *testing.T) {
 			s := ShortURL{
 				OriginalURL: tt.fields.OriginalURL,
 				ID:          tt.fields.ID,
+				Cfg:         config.New(),
 			}
 
 			shortURL := s.GetShortURL()

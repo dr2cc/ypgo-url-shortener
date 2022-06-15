@@ -10,6 +10,10 @@ import (
 
 func main() {
 	cfg := config.New()
+	err := cfg.Init()
+	if err != nil {
+		panic(err)
+	}
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
 	service := services.New(repo, gen, cfg)

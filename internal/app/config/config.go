@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"os"
 )
 
@@ -8,28 +9,33 @@ type Config struct {
 	BaseURL       string
 	ServerAddress string
 	FilePath      string
+	flagSet       *flag.FlagSet
 }
 
 func New() *Config {
 	return &Config{
-		ServerAddress: getServerAddress(),
-		BaseURL:       getBaseURL(),
-		FilePath:      os.Getenv("FILE_STORAGE_PATH"),
+		BaseURL:       "http://localhost:8080",
+		ServerAddress: ":8080",
+		FilePath:      "",
+		flagSet:       nil,
 	}
 }
 
-func getServerAddress() string {
-	v := os.Getenv("SERVER_ADDRESS")
-	if v == "" {
-		v = ":8080"
+func (c *Config) Init() error {
+	c.flagSet = flag.NewFlagSet("", flag.PanicOnError)
+	c.flagSet.StringVar(&c.ServerAddress, "a", getEnv("SERVER_ADDRESS", ":8080"), "host to listen on")
+	c.flagSet.StringVar(&c.BaseURL, "b", getEnv("BASE_URL", "http://localhost:8080"), "base url")
+	c.flagSet.StringVar(&c.FilePath, "f", getEnv("FILE_STORAGE_PATH", ""), "file storage path")
+	err := c.flagSet.Parse(os.Args[1:])
+	if err != nil {
+		return err
 	}
-	return v
+	return nil
 }
 
-func getBaseURL() string {
-	v := os.Getenv("BASE_URL")
-	if v == "" {
-		v = "http://localhost:8080"
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
 	}
-	return v
+	return fallback
 }
