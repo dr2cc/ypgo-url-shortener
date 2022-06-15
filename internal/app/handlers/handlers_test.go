@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -28,6 +29,51 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 	require.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err = client.Do(req)
+	require.NoError(t, err)
+
+	respBody, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	require.NoError(t, err)
+
+	return resp, string(bytes.TrimSpace(respBody))
+}
+
+func testGzippedRequest(t *testing.T, ts *httptest.Server, method, path string, body string) (*http.Response, string) {
+	t.Helper()
+
+	var err error
+	var req *http.Request
+	var resp *http.Response
+	var respBody []byte
+
+	var b bytes.Buffer
+
+	w, _ := gzip.NewWriterLevel(&b, gzip.BestCompression)
+
+	_, err = w.Write([]byte(body))
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	err = w.Close()
+	if err != nil {
+		return nil, err.Error()
+	}
+
+	req, err = http.NewRequest(method, ts.URL+path, bytes.NewReader(b.Bytes()))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -202,6 +248,12 @@ func TestHandler_Shorten(t *testing.T) {
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
+
+			result, body = testGzippedRequest(t, ts, tt.method, "/", tt.body)
+			defer result.Body.Close()
+
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.body, body)
 		})
 	}
 }
@@ -291,6 +343,15 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			defer ts.Close()
 
 			result, body := testRequest(t, ts, tt.method, "/api/shorten", tt.body)
+			defer result.Body.Close()
+
+			if tt.want.contentType != "" {
+				assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			}
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.body, body)
+
+			result, body = testGzippedRequest(t, ts, tt.method, "/api/shorten", tt.body)
 			defer result.Body.Close()
 
 			if tt.want.contentType != "" {
