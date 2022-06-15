@@ -63,7 +63,7 @@ func TestHandler_Expand(t *testing.T) {
 			want: want{
 				statusCode: http.StatusTemporaryRedirect,
 				location:   "/url",
-				body:       "<a href=\"/url\">Temporary Redirect</a>.",
+				body:       "",
 			},
 			request: "/id",
 			method:  http.MethodGet,

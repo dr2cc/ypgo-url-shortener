@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -43,7 +44,13 @@ func NewHandler(service *services.Shortener) *Handler {
 }
 
 func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
-	url, err := io.ReadAll(r.Body)
+	reader, err := getDecompressedReader(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	url, err := io.ReadAll(reader)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -90,7 +97,13 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	var v models.ShortURL
 
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+	reader, err := getDecompressedReader(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(reader).Decode(&v); err != nil {
 		http.Error(w, "cannot decode json", http.StatusBadRequest)
 		return
 	}
@@ -119,5 +132,13 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(out)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getDecompressedReader(r *http.Request) (io.Reader, error) {
+	if r.Header.Get("Content-Encoding") == "gzip" {
+		return gzip.NewReader(r.Body)
+	} else {
+		return r.Body, nil
 	}
 }
