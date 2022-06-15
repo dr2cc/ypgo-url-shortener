@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"compress/flate"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,6 +18,7 @@ func NewRouter(service *services.Shortener) chi.Router {
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(flate.BestSpeed))
 
 	h := NewHandler(service)
 
