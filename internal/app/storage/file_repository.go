@@ -85,9 +85,5 @@ func (repo *FileRepository) GetByID(id string) (string, error) {
 }
 
 func (repo *FileRepository) CloseFile() error {
-	err := repo.file.Close()
-	if err != nil {
-		return err
-	}
-	return nil
+	return repo.file.Close()
 }

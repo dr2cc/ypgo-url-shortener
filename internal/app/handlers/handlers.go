@@ -138,7 +138,6 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 func getDecompressedReader(r *http.Request) (io.Reader, error) {
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		return gzip.NewReader(r.Body)
-	} else {
-		return r.Body, nil
 	}
+	return r.Body, nil
 }
