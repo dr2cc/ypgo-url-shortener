@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rand"
 	"flag"
 	"os"
 )
@@ -9,13 +10,29 @@ type Config struct {
 	BaseURL       string
 	ServerAddress string
 	FilePath      string
+	EncryptionKey []byte
+}
+
+func generateRandom(size int) ([]byte, error) {
+	b := make([]byte, size)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 func New() *Config {
+	randomKey, err := generateRandom(16)
+	if err != nil {
+		randomKey = make([]byte, 16)
+	}
 	return &Config{
 		BaseURL:       "http://localhost:8080",
 		ServerAddress: ":8080",
 		FilePath:      "",
+		EncryptionKey: randomKey,
 	}
 }
 
