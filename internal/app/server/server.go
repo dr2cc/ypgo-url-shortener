@@ -15,7 +15,7 @@ type Server struct {
 }
 
 func (s *Server) Run() {
-	r := handlers.NewRouter(s.service)
+	r := handlers.NewRouter(s.service, s.config)
 
 	httpServer := &http.Server{
 		Addr:    s.config.ServerAddress,

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"crypto/rand"
+	"crypto/aes"
 	"flag"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"os"
 )
 
@@ -13,18 +14,8 @@ type Config struct {
 	EncryptionKey []byte
 }
 
-func generateRandom(size int) ([]byte, error) {
-	b := make([]byte, size)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
 func New() *Config {
-	randomKey, err := generateRandom(16)
+	randomKey, err := random.GenerateRandom(2 * aes.BlockSize)
 	if err != nil {
 		randomKey = make([]byte, 16)
 	}

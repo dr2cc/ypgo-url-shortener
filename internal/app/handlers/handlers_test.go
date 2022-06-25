@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -165,7 +166,7 @@ func TestHandler_Expand(t *testing.T) {
 			mockGen := new(mocks.MockGen)
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -239,7 +240,7 @@ func TestHandler_Shorten(t *testing.T) {
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -254,6 +255,7 @@ func TestHandler_Shorten(t *testing.T) {
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
+			fmt.Println(result.Cookies())
 		})
 	}
 }
@@ -338,7 +340,7 @@ func TestHandler_ShortenAPI(t *testing.T) {
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 

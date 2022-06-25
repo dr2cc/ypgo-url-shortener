@@ -3,30 +3,29 @@ package handlers
 import (
 	"compress/flate"
 	"compress/gzip"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/json"
+	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 )
 
 const cookieName = "shortener-user-id"
 
-func NewRouter(service *services.Shortener) chi.Router {
+func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(flate.BestSpeed))
 
-	h := NewHandler(service)
+	h := NewHandler(service, config)
 
 	r.Route("/", func(r chi.Router) {
 		r.Get("/{id}", h.Expand)
@@ -39,12 +38,15 @@ func NewRouter(service *services.Shortener) chi.Router {
 type Handler struct {
 	Mux     *chi.Mux
 	service *services.Shortener
+	crypto  crypto.Cryptographer
 }
 
-func NewHandler(service *services.Shortener) *Handler {
+func NewHandler(service *services.Shortener, c *config.Config) *Handler {
+	cryptographer := crypto.SymmetricCryptographer{Key: c.EncryptionKey}
 	return &Handler{
 		Mux:     chi.NewMux(),
 		service: service,
+		crypto:  &cryptographer,
 	}
 }
 
@@ -69,15 +71,14 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	userId := h.getUserId(r)
 
 	if userId == "" {
-		userId = generateUserId()
+		userId = random.GenerateUserId()
 
-		var encryptedUserId []byte
-
-		err = encryptCookie([]byte(userId), encryptedUserId)
+		encryptedUserId, err := h.crypto.Encrypt([]byte(userId))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		http.SetCookie(
 			w,
 			&http.Cookie{
@@ -103,55 +104,18 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func generateRandom(size int) ([]byte, error) {
-	b := make([]byte, size)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-func encryptCookie(src []byte, dst []byte) error {
-	// будем использовать AES256, создав ключ длиной 32 байта
-	key, err := generateRandom(2 * aes.BlockSize) // ключ шифрования
-	if err != nil {
-		return err
-	}
-
-	aesblock, err := aes.NewCipher(key)
-	if err != nil {
-		return err
-	}
-
-	aesgcm, err := cipher.NewGCM(aesblock)
-	if err != nil {
-		return err
-	}
-
-	// создаём вектор инициализации
-	nonce, err := generateRandom(aesgcm.NonceSize())
-	if err != nil {
-		return err
-	}
-
-	dst = aesgcm.Seal(nil, nonce, src, nil) // зашифровываем
-
-	return nil
-}
-
-func generateUserId() string {
-	return uuid.NewString()
-}
-
 func (h *Handler) getUserId(r *http.Request) string {
 	encryptedCookie, err := r.Cookie(cookieName)
 	if err != nil {
 		return ""
 	}
 
-	return encryptedCookie.Value
+	decryptedUserId, err := h.crypto.Decrypt([]byte(encryptedCookie.Value))
+	if err != nil {
+		return ""
+	}
+
+	return string(decryptedUserId)
 }
 
 func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
