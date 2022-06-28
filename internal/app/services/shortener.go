@@ -21,28 +21,31 @@ func New(repository storage.Repository, generator generator.Generator, config *c
 	}
 }
 
-func (service *Shortener) Shorten(url string) (models.ShortURL, error) {
+func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, error) {
 	urlID, err := service.generator.GenerateIDFromString(url)
 	if err != nil {
 		return models.ShortURL{}, err
 	}
 
-	err = service.repository.Save(url, urlID)
+	shortURL := models.ShortURL{
+		OriginalURL: url,
+		ID:          urlID,
+		Cfg:         service.config,
+		CreatedById: userID,
+	}
+
+	err = service.repository.Save(shortURL)
 	if err != nil {
 		return models.ShortURL{}, err
 	}
 
-	return models.ShortURL{
-		OriginalURL: url,
-		ID:          urlID,
-		Cfg:         service.config,
-	}, nil
+	return shortURL, nil
 }
 
-func (service *Shortener) Expand(id string) (string, error) {
+func (service *Shortener) Expand(id string) (models.ShortURL, error) {
 	origURL, err := service.repository.GetByID(id)
 	if err != nil {
-		return "", err
+		return models.ShortURL{}, err
 	}
 	return origURL, nil
 }

@@ -1,10 +1,13 @@
 package storage
 
-import "github.com/belamov/ypgo-url-shortener/internal/app/config"
+import (
+	"github.com/belamov/ypgo-url-shortener/internal/app/config"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+)
 
 type Repository interface {
-	Save(url string, id string) error
-	GetByID(id string) (string, error)
+	Save(shortURL models.ShortURL) error
+	GetByID(id string) (models.ShortURL, error)
 }
 
 func GetRepo(cfg *config.Config) Repository {

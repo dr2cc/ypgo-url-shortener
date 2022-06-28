@@ -3,14 +3,15 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"fmt"
+	"errors"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
 type SymmetricCryptographer struct {
 	Key []byte
 }
 
-func (c *SymmetricCryptographer) Encrypt(src []byte) ([]byte, error) {
+func (c *SymmetricCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {
 		return nil, err
@@ -21,14 +22,15 @@ func (c *SymmetricCryptographer) Encrypt(src []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := c.Key[len(c.Key)-aesgcm.NonceSize():]
+	nonce, err := random.GenerateRandom(aesgcm.NonceSize())
+	if err != nil {
+		return nil, err
+	}
 
-	dst := aesgcm.Seal(nil, nonce, src, nil) // зашифровываем
-
-	return dst, nil
+	return aesgcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-func (c *SymmetricCryptographer) Decrypt(src []byte) ([]byte, error) {
+func (c *SymmetricCryptographer) Decrypt(ciphertext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {
 		return nil, err
@@ -39,13 +41,12 @@ func (c *SymmetricCryptographer) Decrypt(src []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := c.Key[len(c.Key)-aesgcm.NonceSize():]
-
-	dst, err := aesgcm.Open(nil, nonce, src, nil) // расшифровываем
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		return nil, err
+	nonceSize := aesgcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext is too short")
 	}
 
-	return dst, nil
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+
+	return aesgcm.Open(nil, nonce, ciphertext, nil) // расшифровываем
 }

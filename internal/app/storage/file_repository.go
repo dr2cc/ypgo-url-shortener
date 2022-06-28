@@ -33,12 +33,7 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 	}, nil
 }
 
-func (repo *FileRepository) Save(url string, id string) error {
-	shortURL := models.ShortURL{
-		OriginalURL: url,
-		ID:          id,
-	}
-
+func (repo *FileRepository) Save(shortURL models.ShortURL) error {
 	data, err := json.Marshal(&shortURL)
 	if err != nil {
 		return err
@@ -62,10 +57,10 @@ func (repo *FileRepository) Save(url string, id string) error {
 	return nil
 }
 
-func (repo *FileRepository) GetByID(id string) (string, error) {
+func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 	_, err := repo.file.Seek(0, io.SeekStart)
 	if err != nil {
-		return "", err
+		return models.ShortURL{}, err
 	}
 
 	var entry models.ShortURL
@@ -74,14 +69,14 @@ func (repo *FileRepository) GetByID(id string) (string, error) {
 		line := repo.scanner.Bytes()
 		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
 		if err != nil {
-			return "", err
+			return models.ShortURL{}, err
 		}
 		if entry.ID == id {
-			return entry.OriginalURL, nil
+			return entry, nil
 		}
 	}
 
-	return "", errors.New("can't find full url by id")
+	return models.ShortURL{}, errors.New("can't find full url by id")
 }
 
 func (repo *FileRepository) CloseFile() error {

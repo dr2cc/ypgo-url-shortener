@@ -105,7 +105,7 @@ func TestShortener_Shorten(t *testing.T) {
 				config.New(),
 			)
 
-			got, err := service.Shorten(tt.args.url)
+			got, err := service.Shorten(tt.args.url, "")
 			if !tt.wantErr {
 				assert.NoError(t, err)
 			}

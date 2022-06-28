@@ -44,7 +44,7 @@ func TestFileRepository_GetByID(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save("url", "id")
+	err = repo.Save("id")
 	require.NoError(t, err)
 
 	for _, tt := range tests {
@@ -103,12 +103,12 @@ func TestFileRepository_Save(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save("existing url", "existing id")
+	err = repo.Save("existing id")
 	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repo.Save(tt.args.url, tt.args.id)
+			err := repo.Save(tt.args.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				savedURL, err := repo.GetByID(tt.args.id)

@@ -99,7 +99,7 @@ func TestInMemoryRepository_Save(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			err := repo.Save(tt.args.url, tt.args.id)
+			err := repo.Save(tt.args.id)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Equal(t, tt.args.url, repo.storage[tt.args.id])

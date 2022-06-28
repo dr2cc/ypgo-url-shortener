@@ -90,7 +90,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	su, err := h.service.Shorten(string(url))
+	su, err := h.service.Shorten(string(url), userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -137,7 +137,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	su, err := h.service.Shorten(v.OriginalURL)
+	su, err := h.service.Shorten(v.OriginalURL, "")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -162,20 +162,20 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	uID := chi.URLParam(r, "id")
 
-	fullURL, err := h.service.Expand(uID)
+	shortURL, err := h.service.Expand(uID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if fullURL == "" {
+	if shortURL.OriginalURL == "" {
 		http.Error(w, "cant find full url", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 
-	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, shortURL.OriginalURL, http.StatusTemporaryRedirect)
 }
 
 func getDecompressedReader(r *http.Request) (io.Reader, error) {

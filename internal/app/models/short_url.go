@@ -7,10 +7,10 @@ import (
 )
 
 type ShortURL struct {
-	OriginalURL string `json:"url"`
-	ID          string `json:"id"`
-	CreatedById string `json:"-"`
-	Cfg         *config.Config
+	OriginalURL string         `json:"url"`
+	ID          string         `json:"id"`
+	CreatedById string         `json:"created_by"`
+	Cfg         *config.Config `json:"-"`
 }
 
 func (s ShortURL) GetShortURL() string {
