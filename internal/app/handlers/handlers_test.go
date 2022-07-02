@@ -405,7 +405,7 @@ func TestHandler_getUserID(t *testing.T) {
 		{
 			name:           "it generates new user id if no cookie was passed",
 			cookieRawValue: "",
-			cookieValue:    "some modified cookie",
+			cookieValue:    "75770aa0e5a26e916fc2c4bd76da15aba5284340f1fdea947d25a56dcf9b15354d3bda",
 			want:           "new user id",
 		},
 	}
@@ -436,7 +436,7 @@ func TestHandler_getUserID(t *testing.T) {
 				encodedCookieValue := hex.EncodeToString(encryptedCookieValue)
 				require.NoError(t, err)
 				req.AddCookie(&http.Cookie{
-					Name:     UserIdCookieName,
+					Name:     UserIDCookieName,
 					Value:    encodedCookieValue,
 					Secure:   true,
 					HttpOnly: true,
@@ -445,7 +445,7 @@ func TestHandler_getUserID(t *testing.T) {
 
 			if tt.cookieValue != "" {
 				req.AddCookie(&http.Cookie{
-					Name:     UserIdCookieName,
+					Name:     UserIDCookieName,
 					Value:    tt.cookieValue,
 					Secure:   true,
 					HttpOnly: true,

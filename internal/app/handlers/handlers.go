@@ -18,7 +18,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const UserIdCookieName = "shortener-user-id"
+const UserIDCookieName = "shortener-user-id"
 
 func NewRouter(service *services.Shortener, config *config.Config, generator random.UserIDGenerator) chi.Router {
 	r := chi.NewRouter()
@@ -174,14 +174,11 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 	}
 
 	encodedCookieValue := hex.EncodeToString(encryptedUserID)
-	if err != nil {
-		return err
-	}
 
 	http.SetCookie(
 		w,
 		&http.Cookie{
-			Name:     UserIdCookieName,
+			Name:     UserIDCookieName,
 			Value:    encodedCookieValue,
 			Secure:   true,
 			HttpOnly: true,
@@ -191,7 +188,7 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 }
 
 func (h *Handler) getUserID(r *http.Request) string {
-	encodedCookie, err := r.Cookie(UserIdCookieName)
+	encodedCookie, err := r.Cookie(UserIDCookieName)
 	if err != nil {
 		return h.userIDGenerator.GenerateUserID()
 	}
