@@ -17,11 +17,11 @@ func GenerateRandom(size int) ([]byte, error) {
 }
 
 type UserIDGenerator interface {
-	GenerateUserId() string
+	GenerateUserID() string
 }
 
 type UUIDGenerator struct{}
 
-func (g *UUIDGenerator) GenerateUserId() string {
+func (g *UUIDGenerator) GenerateUserID() string {
 	return uuid.NewString()
 }

@@ -3,8 +3,9 @@ package config
 import (
 	"crypto/aes"
 	"flag"
-	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"os"
+
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
 type Config struct {
@@ -15,9 +16,10 @@ type Config struct {
 }
 
 func New() *Config {
-	randomKey, err := random.GenerateRandom(2 * aes.BlockSize)
+	size := 2 * aes.BlockSize //nolint:gomnd
+	randomKey, err := random.GenerateRandom(size)
 	if err != nil {
-		randomKey = make([]byte, 16)
+		randomKey = make([]byte, size)
 	}
 	return &Config{
 		BaseURL:       "http://localhost:8080",

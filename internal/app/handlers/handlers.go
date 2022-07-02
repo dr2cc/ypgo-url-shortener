@@ -43,13 +43,13 @@ type Handler struct {
 	userIDGenerator random.UserIDGenerator
 }
 
-func NewHandler(service *services.Shortener, config *config.Config, userIdGenerator random.UserIDGenerator) *Handler {
-	cryptographer := crypto.SymmetricCryptographer{Key: config.EncryptionKey}
+func NewHandler(service *services.Shortener, config *config.Config, userIDGenerator random.UserIDGenerator) *Handler {
+	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey}
 	return &Handler{
 		Mux:             chi.NewMux(),
 		service:         service,
 		crypto:          &cryptographer,
-		userIDGenerator: userIdGenerator,
+		userIDGenerator: userIDGenerator,
 	}
 }
 
@@ -71,15 +71,15 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := h.getUserId(r)
+	userID := h.getUserID(r)
 
-	su, err := h.service.Shorten(string(url), userId)
+	su, err := h.service.Shorten(string(url), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = h.addEncryptedUserIdToCookie(w, userId)
+	err = h.addEncryptedUserIDToCookie(w, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -111,15 +111,15 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := h.getUserId(r)
+	userID := h.getUserID(r)
 
-	su, err := h.service.Shorten(v.OriginalURL, userId)
+	su, err := h.service.Shorten(v.OriginalURL, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = h.addEncryptedUserIdToCookie(w, userId)
+	err = h.addEncryptedUserIDToCookie(w, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -166,8 +166,8 @@ func getDecompressedReader(r *http.Request) (io.Reader, error) {
 	return r.Body, nil
 }
 
-func (h *Handler) addEncryptedUserIdToCookie(w http.ResponseWriter, userID string) error {
-	encryptedUserId, err := h.crypto.Encrypt([]byte(userID))
+func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID string) error {
+	encryptedUserID, err := h.crypto.Encrypt([]byte(userID))
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (h *Handler) addEncryptedUserIdToCookie(w http.ResponseWriter, userID strin
 		w,
 		&http.Cookie{
 			Name:     cookieName,
-			Value:    string(encryptedUserId),
+			Value:    string(encryptedUserID),
 			Secure:   true,
 			HttpOnly: true,
 		},
@@ -184,16 +184,16 @@ func (h *Handler) addEncryptedUserIdToCookie(w http.ResponseWriter, userID strin
 	return nil
 }
 
-func (h *Handler) getUserId(r *http.Request) string {
+func (h *Handler) getUserID(r *http.Request) string {
 	encryptedCookie, err := r.Cookie(cookieName)
 	if err != nil {
-		return h.userIDGenerator.GenerateUserId()
+		return h.userIDGenerator.GenerateUserID()
 	}
 
-	decryptedUserId, err := h.crypto.Decrypt([]byte(encryptedCookie.Value))
+	decryptedUserID, err := h.crypto.Decrypt([]byte(encryptedCookie.Value))
 	if err != nil {
 		return ""
 	}
 
-	return string(decryptedUserId)
+	return string(decryptedUserID)
 }

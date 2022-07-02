@@ -4,14 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"errors"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
-type SymmetricCryptographer struct {
+type GCMAESCryptographer struct {
 	Key []byte
 }
 
-func (c *SymmetricCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
+func (c *GCMAESCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func (c *SymmetricCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 	return aesgcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-func (c *SymmetricCryptographer) Decrypt(ciphertext []byte) ([]byte, error) {
+func (c *GCMAESCryptographer) Decrypt(ciphertext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {
 		return nil, err

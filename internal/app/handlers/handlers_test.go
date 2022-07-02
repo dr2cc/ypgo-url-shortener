@@ -167,7 +167,7 @@ func TestHandler_Expand(t *testing.T) {
 			mockGen := new(mocks.MockGen)
 
 			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserId").Return("user id")
+			mockGenID.On("GenerateUserID").Return("user id")
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
@@ -239,7 +239,7 @@ func TestHandler_Shorten(t *testing.T) {
 			mockRepo.On("Save", models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
-				CreatedById: "user id",
+				CreatedByID: "user id",
 			}).Return(nil)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
@@ -247,7 +247,7 @@ func TestHandler_Shorten(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
 			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserId").Return("user id")
+			mockGenID.On("GenerateUserID").Return("user id")
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
@@ -345,7 +345,7 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockRepo.On("Save", models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
-				CreatedById: "user id",
+				CreatedByID: "user id",
 			}).Return(nil)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
@@ -353,7 +353,7 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
 			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserId").Return("user id")
+			mockGenID.On("GenerateUserID").Return("user id")
 
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)

@@ -72,13 +72,13 @@ func TestInMemoryRepository_Save(t *testing.T) {
 			arg: models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
-				CreatedById: "1",
+				CreatedByID: "1",
 			},
 			wantStorage: map[string]models.ShortURL{
 				"id": {
 					OriginalURL: "url",
 					ID:          "id",
-					CreatedById: "1",
+					CreatedByID: "1",
 				},
 			},
 			wantErr: false,
@@ -90,20 +90,20 @@ func TestInMemoryRepository_Save(t *testing.T) {
 					"id": {
 						OriginalURL: "some url",
 						ID:          "id",
-						CreatedById: "1",
+						CreatedByID: "1",
 					},
 				},
 			},
 			arg: models.ShortURL{
 				OriginalURL: "new url",
 				ID:          "id",
-				CreatedById: "1",
+				CreatedByID: "1",
 			},
 			wantStorage: map[string]models.ShortURL{
 				"id": {
 					OriginalURL: "some url",
 					ID:          "id",
-					CreatedById: "1",
+					CreatedByID: "1",
 				},
 			},
 			wantErr: true,

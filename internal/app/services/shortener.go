@@ -32,7 +32,7 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 	shortURL := models.ShortURL{
 		OriginalURL: url,
 		ID:          urlID,
-		CreatedById: userID,
+		CreatedByID: userID,
 	}
 
 	err = service.repository.Save(shortURL)

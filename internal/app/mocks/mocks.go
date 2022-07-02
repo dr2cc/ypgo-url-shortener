@@ -32,7 +32,7 @@ type MockUserIDGenerator struct {
 	mock.Mock
 }
 
-func (m *MockUserIDGenerator) GenerateUserId() string {
+func (m *MockUserIDGenerator) GenerateUserID() string {
 	args := m.Called()
 	return args.String(0)
 }

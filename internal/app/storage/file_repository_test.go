@@ -115,7 +115,7 @@ func TestFileRepository_Save(t *testing.T) {
 	err = repo.Save(models.ShortURL{
 		OriginalURL: "existing url",
 		ID:          "existing id",
-		CreatedById: "",
+		CreatedByID: "",
 	})
 	require.NoError(t, err)
 
