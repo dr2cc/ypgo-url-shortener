@@ -4,11 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
-
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/handlers"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
 type Server struct {
