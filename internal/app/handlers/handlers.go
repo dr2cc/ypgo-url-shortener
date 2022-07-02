@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
@@ -81,7 +80,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.addEncryptedUserIDToCookie(w, userID)
+	err = h.addEncryptedUserIDToCookie(&w, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -121,7 +120,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.addEncryptedUserIDToCookie(w, userID)
+	err = h.addEncryptedUserIDToCookie(&w, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -203,7 +202,7 @@ func getDecompressedReader(r *http.Request) (io.Reader, error) {
 	return r.Body, nil
 }
 
-func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID string) error {
+func (h *Handler) addEncryptedUserIDToCookie(w *http.ResponseWriter, userID string) error {
 	encryptedUserID, err := h.crypto.Encrypt([]byte(userID))
 	if err != nil {
 		return err
@@ -212,13 +211,10 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 	encodedCookieValue := hex.EncodeToString(encryptedUserID)
 
 	http.SetCookie(
-		w,
+		*w,
 		&http.Cookie{
-			Name:     UserIDCookieName,
-			Value:    encodedCookieValue,
-			Secure:   true,
-			HttpOnly: true,
-			Expires:  time.Now().Add(365 * 24 * time.Hour),
+			Name:  UserIDCookieName,
+			Value: encodedCookieValue,
 		},
 	)
 	return nil

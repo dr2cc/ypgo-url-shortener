@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -346,7 +345,9 @@ func TestHandler_Shorten(t *testing.T) {
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
-			fmt.Println(result.Cookies())
+			if tt.want.statusCode == http.StatusCreated {
+				assert.NotEmpty(t, result.Header.Get("Set-Cookie"))
+			}
 		})
 	}
 }
