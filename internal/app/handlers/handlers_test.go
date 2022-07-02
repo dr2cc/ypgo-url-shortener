@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -378,6 +379,82 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			}
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.body, body)
+		})
+	}
+}
+
+func TestHandler_getUserID(t *testing.T) {
+	tests := []struct {
+		name           string
+		cookieRawValue string
+		cookieValue    string
+		want           string
+	}{
+		{
+			name:           "it returns passed user id correctly",
+			cookieRawValue: "user id",
+			cookieValue:    "",
+			want:           "user id",
+		},
+		{
+			name:           "it generates new user id if no cookie was passed",
+			cookieRawValue: "",
+			cookieValue:    "",
+			want:           "new user id",
+		},
+		{
+			name:           "it generates new user id if no cookie was passed",
+			cookieRawValue: "",
+			cookieValue:    "some modified cookie",
+			want:           "new user id",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockRepo)
+			mockGen := new(mocks.MockGen)
+			mockGenID := new(mocks.MockUserIDGenerator)
+			mockGenID.On("GenerateUserID").Return("new user id")
+
+			cfg := config.New()
+			service := services.New(mockRepo, mockGen, cfg)
+			r := NewRouter(service, cfg, mockGenID)
+
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			req, err := http.NewRequest("get", "", nil)
+
+			require.NoError(t, err)
+
+			req.Header.Set("Content-Type", "application/json")
+
+			h := NewHandler(service, cfg, mockGenID)
+
+			if tt.cookieRawValue != "" {
+				encryptedCookieValue, err := h.crypto.Encrypt([]byte(tt.cookieRawValue))
+				encodedCookieValue := hex.EncodeToString(encryptedCookieValue)
+				require.NoError(t, err)
+				req.AddCookie(&http.Cookie{
+					Name:     UserIdCookieName,
+					Value:    encodedCookieValue,
+					Secure:   true,
+					HttpOnly: true,
+				})
+			}
+
+			if tt.cookieValue != "" {
+				req.AddCookie(&http.Cookie{
+					Name:     UserIdCookieName,
+					Value:    tt.cookieValue,
+					Secure:   true,
+					HttpOnly: true,
+				})
+			}
+
+			res := h.getUserID(req)
+
+			assert.Equal(t, tt.want, res)
 		})
 	}
 }

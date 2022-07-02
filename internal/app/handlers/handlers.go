@@ -3,6 +3,7 @@ package handlers
 import (
 	"compress/flate"
 	"compress/gzip"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const cookieName = "shortener-user-id"
+const UserIdCookieName = "shortener-user-id"
 
 func NewRouter(service *services.Shortener, config *config.Config, generator random.UserIDGenerator) chi.Router {
 	r := chi.NewRouter()
@@ -172,11 +173,16 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 		return err
 	}
 
+	encodedCookieValue := hex.EncodeToString(encryptedUserID)
+	if err != nil {
+		return err
+	}
+
 	http.SetCookie(
 		w,
 		&http.Cookie{
-			Name:     cookieName,
-			Value:    string(encryptedUserID),
+			Name:     UserIdCookieName,
+			Value:    encodedCookieValue,
 			Secure:   true,
 			HttpOnly: true,
 		},
@@ -185,14 +191,19 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 }
 
 func (h *Handler) getUserID(r *http.Request) string {
-	encryptedCookie, err := r.Cookie(cookieName)
+	encodedCookie, err := r.Cookie(UserIdCookieName)
 	if err != nil {
 		return h.userIDGenerator.GenerateUserID()
 	}
 
-	decryptedUserID, err := h.crypto.Decrypt([]byte(encryptedCookie.Value))
+	decodedCookie, err := hex.DecodeString(encodedCookie.Value)
 	if err != nil {
-		return ""
+		return h.userIDGenerator.GenerateUserID()
+	}
+
+	decryptedUserID, err := h.crypto.Decrypt(decodedCookie)
+	if err != nil {
+		return h.userIDGenerator.GenerateUserID()
 	}
 
 	return string(decryptedUserID)
