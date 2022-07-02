@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
@@ -174,11 +175,11 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	formattedURLs := make([]responses.UsersShortUrl, 0)
+	formattedURLs := make([]responses.UsersShortURL, 0)
 	for _, URL := range URLs {
 		formattedURLs = append(
 			formattedURLs,
-			responses.UsersShortUrl{ShortURL: h.service.FormatShortURL(URL), OriginalURL: URL.OriginalURL},
+			responses.UsersShortURL{ShortURL: h.service.FormatShortURL(URL), OriginalURL: URL.OriginalURL},
 		)
 	}
 
@@ -217,6 +218,7 @@ func (h *Handler) addEncryptedUserIDToCookie(w http.ResponseWriter, userID strin
 			Value:    encodedCookieValue,
 			Secure:   true,
 			HttpOnly: true,
+			Expires:  time.Now().Add(365 * 24 * time.Hour),
 		},
 	)
 	return nil

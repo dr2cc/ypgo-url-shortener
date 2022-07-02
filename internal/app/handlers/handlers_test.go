@@ -201,7 +201,7 @@ func TestHandler_Expand(t *testing.T) {
 
 func TestHandler_UserURLs(t *testing.T) {
 	type want struct {
-		body       []responses.UsersShortUrl
+		body       []responses.UsersShortURL
 		statusCode int
 	}
 	tests := []struct {
@@ -214,7 +214,7 @@ func TestHandler_UserURLs(t *testing.T) {
 		{
 			name: "get user's urls",
 			want: want{
-				body: []responses.UsersShortUrl{
+				body: []responses.UsersShortURL{
 					{ShortURL: "http://localhost:8080/id", OriginalURL: "url"},
 				},
 				statusCode: http.StatusOK,
@@ -224,7 +224,7 @@ func TestHandler_UserURLs(t *testing.T) {
 		{
 			name: "get another user's urls ",
 			want: want{
-				body:       []responses.UsersShortUrl{},
+				body:       []responses.UsersShortURL{},
 				statusCode: http.StatusNoContent,
 			},
 			userID: "user id without urls",
@@ -258,9 +258,9 @@ func TestHandler_UserURLs(t *testing.T) {
 				assert.Equal(t, "", body)
 				return
 			}
-			expectedJson, err := json.Marshal(tt.want.body)
+			expectedJSON, err := json.Marshal(tt.want.body)
 			assert.NoError(t, err)
-			assert.JSONEq(t, string(expectedJson), body)
+			assert.JSONEq(t, string(expectedJSON), body)
 		})
 	}
 }
