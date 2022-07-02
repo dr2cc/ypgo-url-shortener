@@ -3,47 +3,46 @@ package storage
 import (
 	"testing"
 
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInMemoryRepository_GetByID(t *testing.T) {
-	type fields struct {
-		storage map[string]string
-	}
 	type args struct {
 		id string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
-		want    string
+		want    models.ShortURL
 		wantErr bool
 	}{
 		{
 			name: "get existing id",
-			fields: fields{storage: map[string]string{
-				"id": "some url",
-			}},
-			args:    args{id: "id"},
-			want:    "some url",
+			args: args{id: "id"},
+			want: models.ShortURL{
+				OriginalURL: "some url",
+				ID:          "id",
+			},
 			wantErr: false,
 		},
 		{
-			name: "get missing id",
-			fields: fields{storage: map[string]string{
-				"id": "some url",
-			}},
+			name:    "get missing id",
 			args:    args{id: "missing"},
-			want:    "",
+			want:    models.ShortURL{},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &InMemoryRepository{
-				storage: tt.fields.storage,
+				storage: map[string]models.ShortURL{
+					"id": {
+						OriginalURL: "some url",
+						ID:          "id",
+					},
+				},
 			}
 			got, err := repo.GetByID(tt.args.id)
 			if !tt.wantErr {
@@ -58,38 +57,54 @@ func TestInMemoryRepository_GetByID(t *testing.T) {
 
 func TestInMemoryRepository_Save(t *testing.T) {
 	type fields struct {
-		storage map[string]string
-	}
-	type args struct {
-		url string
-		id  string
+		storage map[string]models.ShortURL
 	}
 	tests := []struct {
 		name        string
 		fields      fields
-		args        args
+		arg         models.ShortURL
 		wantErr     bool
-		wantStorage map[string]string
+		wantStorage map[string]models.ShortURL
 	}{
 		{
 			name:   "save new url with id",
-			fields: fields{storage: map[string]string{}},
-			args:   args{id: "id", url: "url"},
-			wantStorage: map[string]string{
-				"id": "url",
+			fields: fields{storage: map[string]models.ShortURL{}},
+			arg: models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedById: "1",
+			},
+			wantStorage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedById: "1",
+				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "save new url with same id",
 			fields: fields{
-				storage: map[string]string{
-					"id": "some url",
+				storage: map[string]models.ShortURL{
+					"id": {
+						OriginalURL: "some url",
+						ID:          "id",
+						CreatedById: "1",
+					},
 				},
 			},
-			args: args{id: "id", url: "new url"},
-			wantStorage: map[string]string{
-				"id": "some url",
+			arg: models.ShortURL{
+				OriginalURL: "new url",
+				ID:          "id",
+				CreatedById: "1",
+			},
+			wantStorage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "some url",
+					ID:          "id",
+					CreatedById: "1",
+				},
 			},
 			wantErr: true,
 		},
@@ -99,11 +114,11 @@ func TestInMemoryRepository_Save(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			err := repo.Save(tt.args.id)
+			err := repo.Save(tt.arg)
 			if !tt.wantErr {
 				require.NoError(t, err)
-				assert.Equal(t, tt.args.url, repo.storage[tt.args.id])
-				assert.Contains(t, repo.storage, tt.args.id)
+				assert.Equal(t, tt.arg.OriginalURL, repo.storage[tt.arg.ID].OriginalURL)
+				assert.Contains(t, repo.storage, tt.arg.ID)
 			}
 			assert.Equal(t, tt.wantStorage, repo.storage)
 		})
@@ -113,6 +128,6 @@ func TestInMemoryRepository_Save(t *testing.T) {
 func TestNewInMemoryRepository(t *testing.T) {
 	t.Run("in memory repo init", func(t *testing.T) {
 		repo := NewInMemoryRepository()
-		assert.Equal(t, &InMemoryRepository{storage: map[string]string{}}, repo)
+		assert.Equal(t, &InMemoryRepository{storage: map[string]models.ShortURL{}}, repo)
 	})
 }

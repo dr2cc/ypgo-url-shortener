@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
@@ -30,7 +32,6 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 	shortURL := models.ShortURL{
 		OriginalURL: url,
 		ID:          urlID,
-		Cfg:         service.config,
 		CreatedById: userID,
 	}
 
@@ -48,4 +49,8 @@ func (service *Shortener) Expand(id string) (models.ShortURL, error) {
 		return models.ShortURL{}, err
 	}
 	return origURL, nil
+}
+
+func (service *Shortener) FormatShortURL(model models.ShortURL) string {
+	return fmt.Sprintf("%s/%s", service.config.BaseURL, model.ID)
 }

@@ -2,6 +2,7 @@ package random
 
 import (
 	"crypto/rand"
+
 	"github.com/google/uuid"
 )
 
@@ -15,6 +16,12 @@ func GenerateRandom(size int) ([]byte, error) {
 	return b, nil
 }
 
-func GenerateUserId() string {
+type UserIDGenerator interface {
+	GenerateUserId() string
+}
+
+type UUIDGenerator struct{}
+
+func (g *UUIDGenerator) GenerateUserId() string {
 	return uuid.NewString()
 }

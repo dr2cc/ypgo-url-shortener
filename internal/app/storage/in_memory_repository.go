@@ -2,8 +2,9 @@ package storage
 
 import (
 	"errors"
-	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"sync"
+
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
 type InMemoryRepository struct {

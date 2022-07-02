@@ -16,7 +16,7 @@ func (m *MockRepo) Save(shortURL models.ShortURL) error {
 
 func (m *MockRepo) GetByID(id string) (models.ShortURL, error) {
 	args := m.Called(id)
-	return models.ShortURL{OriginalURL: args.String(0)}, args.Error(1)
+	return models.ShortURL{OriginalURL: args.String(0), ID: id}, args.Error(1)
 }
 
 type MockGen struct {
@@ -26,4 +26,13 @@ type MockGen struct {
 func (m *MockGen) GenerateIDFromString(str string) (string, error) {
 	args := m.Called(str)
 	return args.String(0), args.Error(1)
+}
+
+type MockUserIDGenerator struct {
+	mock.Mock
+}
+
+func (m *MockUserIDGenerator) GenerateUserId() string {
+	args := m.Called()
+	return args.String(0)
 }

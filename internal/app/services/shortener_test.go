@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
@@ -17,19 +18,22 @@ func TestShortener_Expand(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    string
+		want    models.ShortURL
 		wantErr bool
 	}{
 		{
-			name:    "get full url from id",
-			args:    args{id: "id"},
-			want:    "url",
+			name: "get full url from id",
+			args: args{id: "id"},
+			want: models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+			},
 			wantErr: false,
 		},
 		{
 			name:    "get full url from missing id",
 			args:    args{id: "missing"},
-			want:    "",
+			want:    models.ShortURL{},
 			wantErr: true,
 		},
 	}
@@ -91,8 +95,14 @@ func TestShortener_Shorten(t *testing.T) {
 			rm := new(mocks.MockRepo)
 			rm.On("GetByID", "id").Return("url", nil)
 			rm.On("GetByID", "missing").Return("", errors.New(""))
-			rm.On("Save", "url", "id").Return(nil)
-			rm.On("Save", "fail", "id").Return(errors.New(""))
+			rm.On("Save", models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+			}).Return(nil)
+			rm.On("Save", models.ShortURL{
+				OriginalURL: "fail",
+				ID:          "id",
+			}).Return(errors.New(""))
 
 			gm := new(mocks.MockGen)
 			gm.On("GenerateIDFromString", "url").Return("id", nil)
@@ -110,6 +120,46 @@ func TestShortener_Shorten(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.ObjectsAreEqual(tt.want, got)
+		})
+	}
+}
+
+func TestShortener_GetShortURL(t *testing.T) {
+	type fields struct {
+		OriginalURL string
+		ID          string
+	}
+	cfg := config.New()
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "it correctly generates short url",
+			fields: fields{
+				ID: "id",
+			},
+			want: fmt.Sprintf("%s/id", cfg.BaseURL),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rm := new(mocks.MockRepo)
+			gm := new(mocks.MockGen)
+			service := New(
+				rm,
+				gm,
+				cfg,
+			)
+			model := models.ShortURL{
+				OriginalURL: tt.fields.OriginalURL,
+				ID:          tt.fields.ID,
+			}
+
+			shortURL := service.FormatShortURL(model)
+
+			assert.Equal(t, tt.want, shortURL)
 		})
 	}
 }

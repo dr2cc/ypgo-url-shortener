@@ -13,6 +13,7 @@ import (
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
+	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,9 +165,13 @@ func TestHandler_Expand(t *testing.T) {
 			mockRepo.On("GetByID", "error").Return("", errors.New("error text"))
 
 			mockGen := new(mocks.MockGen)
+
+			mockGenID := new(mocks.MockUserIDGenerator)
+			mockGenID.On("GenerateUserId").Return("user id")
+
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, cfg, mockGenID)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -231,16 +236,22 @@ func TestHandler_Shorten(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", "url", "id").Return(nil)
-
+			mockRepo.On("Save", models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedById: "user id",
+			}).Return(nil)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
+			mockGenID := new(mocks.MockUserIDGenerator)
+			mockGenID.On("GenerateUserId").Return("user id")
+
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, cfg, mockGenID)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -331,16 +342,22 @@ func TestHandler_ShortenAPI(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", "url", "id").Return(nil)
-
+			mockRepo.On("Save", models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedById: "user id",
+			}).Return(nil)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
+			mockGenID := new(mocks.MockUserIDGenerator)
+			mockGenID.On("GenerateUserId").Return("user id")
+
 			cfg := config.New()
 			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, cfg, mockGenID)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
