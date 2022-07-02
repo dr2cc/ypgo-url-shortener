@@ -7,6 +7,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/server"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
 
@@ -19,7 +20,8 @@ func main() {
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
 	service := services.New(repo, gen, cfg)
-	srv := server.New(cfg, service)
+	userIDGenerator := &random.UUIDGenerator{}
+	srv := server.New(cfg, service, userIDGenerator)
 
 	srv.Run()
 }

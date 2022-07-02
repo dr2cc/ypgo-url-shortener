@@ -26,9 +26,10 @@ func (s *Server) Run() {
 	log.Fatal(httpServer.ListenAndServe())
 }
 
-func New(config *config.Config, service *services.Shortener) *Server {
+func New(config *config.Config, service *services.Shortener, generator *random.UUIDGenerator) *Server {
 	return &Server{
-		config:  config,
-		service: service,
+		config:      config,
+		service:     service,
+		idGenerator: generator,
 	}
 }
