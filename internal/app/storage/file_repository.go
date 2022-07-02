@@ -58,6 +58,9 @@ func (repo *FileRepository) Save(shortURL models.ShortURL) error {
 }
 
 func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
 	_, err := repo.file.Seek(0, io.SeekStart)
 	if err != nil {
 		return models.ShortURL{}, err
@@ -77,6 +80,32 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 	}
 
 	return models.ShortURL{}, errors.New("can't find full url by id")
+}
+
+func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	_, err := repo.file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	var entry models.ShortURL
+	var URLs []models.ShortURL
+
+	for repo.scanner.Scan() {
+		line := repo.scanner.Bytes()
+		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
+		if err != nil {
+			return nil, err
+		}
+		if entry.CreatedByID == id {
+			URLs = append(URLs, entry)
+		}
+	}
+
+	return URLs, nil
 }
 
 func (repo *FileRepository) CloseFile() error {

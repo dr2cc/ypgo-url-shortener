@@ -9,6 +9,14 @@ type MockRepo struct {
 	mock.Mock
 }
 
+func (m *MockRepo) GetUsersUrls(id string) ([]models.ShortURL, error) {
+	args := m.Called(id)
+	if args.String(0) == "" && args.String(1) == "" {
+		return []models.ShortURL{}, nil
+	}
+	return []models.ShortURL{{OriginalURL: args.String(0), ID: args.String(1), CreatedByID: id}}, nil
+}
+
 func (m *MockRepo) Save(shortURL models.ShortURL) error {
 	args := m.Called(shortURL)
 	return args.Error(0)

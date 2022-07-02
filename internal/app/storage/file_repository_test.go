@@ -183,3 +183,63 @@ func TestNewFileRepository(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestFileRepository_GetUsersUrls(t *testing.T) {
+	type args struct {
+		userID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []models.ShortURL
+		wantErr bool
+	}{
+		{
+			name: "get existing user id",
+			args: args{userID: "user id"},
+			want: []models.ShortURL{{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedByID: "user id",
+			}},
+		},
+		{
+			name: "get missing user id",
+			args: args{userID: "not existing"},
+			want: nil,
+		},
+	}
+	filename := "./test_get_by_user_id"
+	repo, err := NewFileRepository(filename)
+	require.NoError(t, err)
+	defer func(repo *FileRepository) {
+		err := repo.CloseFile()
+		require.NoError(t, err)
+	}(repo)
+	defer func(name string) {
+		err := os.Remove(name)
+		require.NoError(t, err)
+	}(filename)
+
+	err = repo.Save(models.ShortURL{
+		OriginalURL: "url",
+		ID:          "id",
+		CreatedByID: "user id",
+	})
+	require.NoError(t, err)
+
+	err = repo.Save(models.ShortURL{
+		OriginalURL: "url2",
+		ID:          "id2",
+		CreatedByID: "user2 id",
+	})
+	require.NoError(t, err)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.GetUsersUrls(tt.args.userID)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

@@ -54,3 +54,7 @@ func (service *Shortener) Expand(id string) (models.ShortURL, error) {
 func (service *Shortener) FormatShortURL(model models.ShortURL) string {
 	return fmt.Sprintf("%s/%s", service.config.BaseURL, model.ID)
 }
+
+func (service *Shortener) GetUrlsCreatedBy(userID string) ([]models.ShortURL, error) {
+	return service.repository.GetUsersUrls(userID)
+}

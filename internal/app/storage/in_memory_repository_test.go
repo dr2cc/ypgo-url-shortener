@@ -131,3 +131,67 @@ func TestNewInMemoryRepository(t *testing.T) {
 		assert.Equal(t, &InMemoryRepository{storage: map[string]models.ShortURL{}}, repo)
 	})
 }
+
+func TestInMemoryRepository_GetUsersUrls(t *testing.T) {
+	type fields struct {
+		storage map[string]models.ShortURL
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []models.ShortURL
+	}{
+		{
+			name: "it returns urls of user",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			args: args{id: "user"},
+			want: []models.ShortURL{{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedByID: "user",
+			}},
+		},
+		{
+			name: "it returns null of non existing user",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			args: args{id: "non existing user"},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &InMemoryRepository{
+				storage: tt.fields.storage,
+			}
+			URLs, _ := repo.GetUsersUrls(tt.args.id)
+			assert.Equal(t, tt.want, URLs)
+			assert.Equal(t, len(tt.want), len(URLs))
+		})
+	}
+}

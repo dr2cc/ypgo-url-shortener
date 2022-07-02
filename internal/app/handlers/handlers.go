@@ -29,11 +29,11 @@ func NewRouter(service *services.Shortener, config *config.Config, generator ran
 
 	h := NewHandler(service, config, generator)
 
-	r.Route("/", func(r chi.Router) {
-		r.Get("/{id}", h.Expand)
-		r.Post("/", h.Shorten)
-		r.Post("/api/shorten", h.ShortenAPI)
-	})
+	r.Get("/{id}", h.Expand)
+	r.Post("/", h.Shorten)
+	r.Post("/api/shorten", h.ShortenAPI)
+	r.Get("/api/user/urls", h.UserURLs)
+
 	return r
 }
 
@@ -158,6 +158,41 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	http.Redirect(w, r, shortURL.OriginalURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
+	userID := h.getUserID(r)
+
+	URLs, err := h.service.GetUrlsCreatedBy(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if len(URLs) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	formattedURLs := make([]responses.UsersShortUrl, 0)
+	for _, URL := range URLs {
+		formattedURLs = append(
+			formattedURLs,
+			responses.UsersShortUrl{ShortURL: h.service.FormatShortURL(URL), OriginalURL: URL.OriginalURL},
+		)
+	}
+
+	out, err := json.Marshal(formattedURLs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(out)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func getDecompressedReader(r *http.Request) (io.Reader, error) {

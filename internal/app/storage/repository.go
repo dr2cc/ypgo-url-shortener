@@ -8,6 +8,7 @@ import (
 type Repository interface {
 	Save(shortURL models.ShortURL) error
 	GetByID(id string) (models.ShortURL, error)
+	GetUsersUrls(id string) ([]models.ShortURL, error)
 }
 
 func GetRepo(cfg *config.Config) Repository {

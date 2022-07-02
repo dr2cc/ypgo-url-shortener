@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,12 +16,14 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, body string) (*http.Response, string) {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body string, cookies map[string]string) (*http.Response, string) {
 	t.Helper()
 
 	var err error
@@ -39,6 +42,16 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body st
 		},
 	}
 
+	if len(cookies) > 0 {
+		for name, value := range cookies {
+			req.AddCookie(&http.Cookie{
+				Name:     name,
+				Value:    value,
+				Secure:   true,
+				HttpOnly: true,
+			})
+		}
+	}
 	resp, err = client.Do(req)
 	require.NoError(t, err)
 
@@ -176,12 +189,78 @@ func TestHandler_Expand(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			result, body := testRequest(t, ts, tt.method, tt.request, "")
+			result, body := testRequest(t, ts, tt.method, tt.request, "", nil)
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
 			assert.Equal(t, tt.want.body, body)
+		})
+	}
+}
+
+func TestHandler_UserURLs(t *testing.T) {
+	type want struct {
+		body       []responses.UsersShortUrl
+		statusCode int
+	}
+	tests := []struct {
+		name    string
+		request string
+		want    want
+		userID  string
+		method  string
+	}{
+		{
+			name: "get user's urls",
+			want: want{
+				body: []responses.UsersShortUrl{
+					{ShortURL: "http://localhost:8080/id", OriginalURL: "url"},
+				},
+				statusCode: http.StatusOK,
+			},
+			userID: "user id with urls",
+		},
+		{
+			name: "get another user's urls ",
+			want: want{
+				body:       []responses.UsersShortUrl{},
+				statusCode: http.StatusNoContent,
+			},
+			userID: "user id without urls",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockRepo)
+			mockRepo.On("GetUsersUrls", "user id with urls").Return("url", "id")
+			mockRepo.On("GetUsersUrls", "user id without urls").Return("", "")
+
+			mockGen := new(mocks.MockGen)
+			mockGenID := new(mocks.MockUserIDGenerator)
+
+			cfg := config.New()
+			service := services.New(mockRepo, mockGen, cfg)
+			r := NewRouter(service, cfg, mockGenID)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			cryptographer := crypto.GCMAESCryptographer{Key: cfg.EncryptionKey}
+			encryptedCookieValue, _ := cryptographer.Encrypt([]byte(tt.userID))
+			cookies := map[string]string{
+				UserIDCookieName: hex.EncodeToString(encryptedCookieValue),
+			}
+			result, body := testRequest(t, ts, http.MethodGet, "/api/user/urls", "", cookies)
+			defer result.Body.Close()
+
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			if tt.want.statusCode == http.StatusNoContent {
+				assert.Equal(t, "", body)
+				return
+			}
+			expectedJson, err := json.Marshal(tt.want.body)
+			assert.NoError(t, err)
+			assert.JSONEq(t, string(expectedJson), body)
 		})
 	}
 }
@@ -256,7 +335,7 @@ func TestHandler_Shorten(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			result, body := testRequest(t, ts, tt.method, "/", tt.body)
+			result, body := testRequest(t, ts, tt.method, "/", tt.body, nil)
 			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
@@ -362,7 +441,7 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			result, body := testRequest(t, ts, tt.method, "/api/shorten", tt.body)
+			result, body := testRequest(t, ts, tt.method, "/api/shorten", tt.body, nil)
 			defer result.Body.Close()
 
 			if tt.want.contentType != "" {
@@ -423,7 +502,7 @@ func TestHandler_getUserID(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			req, err := http.NewRequest("get", "", nil)
+			req, err := http.NewRequest(http.MethodGet, "", nil)
 
 			require.NoError(t, err)
 

@@ -46,3 +46,15 @@ func (repo *InMemoryRepository) GetByID(id string) (models.ShortURL, error) {
 
 	return url, nil
 }
+
+func (repo *InMemoryRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
+	repo.mutex.RLock()
+	var URLs []models.ShortURL
+	for _, URL := range repo.storage {
+		if URL.CreatedByID == id {
+			URLs = append(URLs, URL)
+		}
+	}
+	repo.mutex.RUnlock()
+	return URLs, nil
+}
