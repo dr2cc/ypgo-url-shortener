@@ -44,8 +44,8 @@ func runMigrations(conn *pgx.Conn) error {
 
 	t, err := conn.Exec(context.Background(), "create table if not exists urls("+
 		"created_by varchar(36) not null, "+
-		"original_url varchar() not null, "+
-		"id varchar(8) unique not null"+
+		"original_url varchar not null, "+
+		"id varchar(12) unique not null"+
 		");")
 	fmt.Println(t)
 	if err != nil {
