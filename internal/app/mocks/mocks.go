@@ -27,6 +27,14 @@ func (m *MockRepo) GetByID(id string) (models.ShortURL, error) {
 	return models.ShortURL{OriginalURL: args.String(0), ID: id}, args.Error(1)
 }
 
+func (m *MockRepo) Close() error {
+	return nil
+}
+
+func (m *MockRepo) Check() error {
+	return nil
+}
+
 type MockGen struct {
 	mock.Mock
 }
