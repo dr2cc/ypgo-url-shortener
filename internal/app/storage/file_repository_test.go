@@ -40,7 +40,7 @@ func TestFileRepository_GetByID(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.CloseFile()
+		err := repo.Close()
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -104,7 +104,7 @@ func TestFileRepository_Save(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.CloseFile()
+		err := repo.Close()
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -150,7 +150,7 @@ func TestNewFileRepository(t *testing.T) {
 
 		repo, err := NewFileRepository(filename)
 		defer func(repo *FileRepository) {
-			err := repo.CloseFile()
+			err := repo.Close()
 			assert.NoError(t, err)
 		}(repo)
 
@@ -174,7 +174,7 @@ func TestNewFileRepository(t *testing.T) {
 		assert.NoError(t, err)
 
 		defer func(repo *FileRepository) {
-			err := repo.CloseFile()
+			err := repo.Close()
 			assert.NoError(t, err)
 		}(repo)
 		assert.NoError(t, err)
@@ -213,7 +213,7 @@ func TestFileRepository_GetUsersUrls(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.CloseFile()
+		err := repo.Close()
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {

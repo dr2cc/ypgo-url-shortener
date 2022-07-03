@@ -108,6 +108,11 @@ func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
 	return URLs, nil
 }
 
-func (repo *FileRepository) CloseFile() error {
+func (repo *FileRepository) Close() error {
 	return repo.file.Close()
+}
+
+func (repo *FileRepository) Check() error {
+	_, err := repo.file.Stat()
+	return err
 }

@@ -33,6 +33,7 @@ func NewRouter(service *services.Shortener, config *config.Config, generator ran
 	r.Post("/", h.Shorten)
 	r.Post("/api/shorten", h.ShortenAPI)
 	r.Get("/api/user/urls", h.UserURLs)
+	r.Get("/ping", h.Ping)
 
 	return r
 }
@@ -237,4 +238,11 @@ func (h *Handler) getUserID(r *http.Request) string {
 	}
 
 	return string(decryptedUserID)
+}
+
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	err := h.service.HealthCheck()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

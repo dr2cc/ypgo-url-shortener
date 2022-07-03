@@ -58,3 +58,7 @@ func (service *Shortener) FormatShortURL(model models.ShortURL) string {
 func (service *Shortener) GetUrlsCreatedBy(userID string) ([]models.ShortURL, error) {
 	return service.repository.GetUsersUrls(userID)
 }
+
+func (service *Shortener) HealthCheck() error {
+	return service.repository.Check()
+}

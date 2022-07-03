@@ -9,19 +9,25 @@ type Repository interface {
 	Save(shortURL models.ShortURL) error
 	GetByID(id string) (models.ShortURL, error)
 	GetUsersUrls(id string) ([]models.ShortURL, error)
+	Close() error
+	Check() error
 }
 
 func GetRepo(cfg *config.Config) Repository {
-	var repo Repository
-	var err error
-
-	if filePath := cfg.FilePath; filePath != "" {
-		repo, err = NewFileRepository(filePath)
+	if cfg.DatabaseDSN != "" {
+		repo, err := NewPgRepository(cfg.DatabaseDSN)
 		if err != nil {
 			panic(err)
 		}
-	} else {
-		repo = NewInMemoryRepository()
+		return repo
 	}
-	return repo
+	if cfg.FilePath != "" {
+		repo, err := NewFileRepository(cfg.FilePath)
+		if err != nil {
+			panic(err)
+		}
+		return repo
+	}
+
+	return NewInMemoryRepository()
 }

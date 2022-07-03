@@ -58,3 +58,12 @@ func (repo *InMemoryRepository) GetUsersUrls(id string) ([]models.ShortURL, erro
 	repo.mutex.RUnlock()
 	return URLs, nil
 }
+
+func (repo *InMemoryRepository) Close() error {
+	repo.storage = make(map[string]models.ShortURL)
+	return nil
+}
+
+func (repo *InMemoryRepository) Check() error {
+	return nil
+}
