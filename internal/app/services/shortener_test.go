@@ -215,8 +215,7 @@ func TestShortener_GetShortURL(t *testing.T) {
 				cfg,
 			)
 			model := models.ShortURL{
-				OriginalURL: tt.fields.OriginalURL,
-				ID:          tt.fields.ID,
+				ID: tt.fields.ID,
 			}
 
 			shortURL := service.FormatShortURL(model.ID)
