@@ -85,7 +85,7 @@ func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 		context.Background(),
 		"select original_url, id, created_by, correlation_id from urls where id=$1",
 		id,
-	).Scan(&model)
+	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID)
 	return model, err
 }
 
