@@ -13,10 +13,9 @@ import (
 )
 
 type FileRepository struct {
-	mutex   sync.RWMutex
-	file    *os.File
-	writer  *bufio.Writer
-	scanner *bufio.Scanner
+	mutex  sync.RWMutex
+	file   *os.File
+	writer *bufio.Writer
 }
 
 func NewFileRepository(filePath string) (*FileRepository, error) {
@@ -26,15 +25,53 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 	}
 
 	return &FileRepository{
-		mutex:   sync.RWMutex{},
-		file:    file,
-		writer:  bufio.NewWriter(file),
-		scanner: bufio.NewScanner(file),
+		mutex:  sync.RWMutex{},
+		file:   file,
+		writer: bufio.NewWriter(file),
 	}, nil
 }
 
+func (repo *FileRepository) SaveBatch(batch []models.ShortURL) error {
+	for _, shortURL := range batch {
+		_, err := repo.GetByID(shortURL.ID)
+		if err == nil {
+			return errors.New("not unique id " + shortURL.ID)
+		}
+	}
+
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	for _, shortURL := range batch {
+
+		data, err := json.Marshal(shortURL)
+		if err != nil {
+			return err
+		}
+
+		if _, err := repo.writer.Write(data); err != nil {
+			return err
+		}
+
+		if err := repo.writer.WriteByte('\n'); err != nil {
+			return err
+		}
+
+	}
+	if err := repo.writer.Flush(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *FileRepository) Save(shortURL models.ShortURL) error {
-	data, err := json.Marshal(&shortURL)
+	_, err := repo.GetByID(shortURL.ID)
+	if err == nil {
+		return errors.New("not unique id " + shortURL.ID)
+	}
+
+	data, err := json.Marshal(shortURL)
 	if err != nil {
 		return err
 	}
@@ -68,8 +105,10 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 
 	var entry models.ShortURL
 
-	for repo.scanner.Scan() {
-		line := repo.scanner.Bytes()
+	scanner := bufio.NewScanner(repo.file)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
 		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
 		if err != nil {
 			return models.ShortURL{}, err
@@ -94,8 +133,10 @@ func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
 	var entry models.ShortURL
 	var URLs []models.ShortURL
 
-	for repo.scanner.Scan() {
-		line := repo.scanner.Bytes()
+	scanner := bufio.NewScanner(repo.file)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
 		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
 		if err != nil {
 			return nil, err

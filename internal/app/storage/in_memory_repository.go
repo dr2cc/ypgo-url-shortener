@@ -19,6 +19,24 @@ func NewInMemoryRepository() *InMemoryRepository {
 	}
 }
 
+func (repo *InMemoryRepository) SaveBatch(batch []models.ShortURL) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	for _, shortURL := range batch {
+		_, ok := repo.storage[shortURL.ID]
+		if ok {
+			return errors.New("not unique id " + shortURL.ID)
+		}
+	}
+
+	for _, shortURL := range batch {
+		repo.storage[shortURL.ID] = shortURL
+	}
+
+	return nil
+}
+
 func (repo *InMemoryRepository) Save(shortURL models.ShortURL) error {
 	repo.mutex.RLock()
 	_, ok := repo.storage[shortURL.ID]

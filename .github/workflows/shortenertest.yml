@@ -132,13 +132,13 @@ jobs:
               -binary-path=cmd/shortener/shortener \
               -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
 
-#      - name: "Code increment #12"
-#        if: always()
-#        run: |
-#          shortenertest -test.v -test.run=^TestIteration12$ \
-#              -binary-path=cmd/shortener/shortener \
-#              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
-#
+      - name: "Code increment #12"
+        if: always()
+        run: |
+          shortenertest -test.v -test.run=^TestIteration12$ \
+              -binary-path=cmd/shortener/shortener \
+              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+
 #      - name: "Code increment #13"
 #        if: always()
 #        run: |

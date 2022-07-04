@@ -51,8 +51,8 @@ func (service *Shortener) Expand(id string) (models.ShortURL, error) {
 	return origURL, nil
 }
 
-func (service *Shortener) FormatShortURL(model models.ShortURL) string {
-	return fmt.Sprintf("%s/%s", service.config.BaseURL, model.ID)
+func (service *Shortener) FormatShortURL(urlID string) string {
+	return fmt.Sprintf("%s/%s", service.config.BaseURL, urlID)
 }
 
 func (service *Shortener) GetUrlsCreatedBy(userID string) ([]models.ShortURL, error) {
@@ -61,4 +61,22 @@ func (service *Shortener) GetUrlsCreatedBy(userID string) ([]models.ShortURL, er
 
 func (service *Shortener) HealthCheck() error {
 	return service.repository.Check()
+}
+
+func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
+	for _, URL := range batch {
+		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		URL.ID = urlID
+		URL.CreatedByID = userID
+	}
+
+	err := service.repository.SaveBatch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return batch, nil
 }

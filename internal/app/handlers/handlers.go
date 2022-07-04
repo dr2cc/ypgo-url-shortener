@@ -32,6 +32,7 @@ func NewRouter(service *services.Shortener, config *config.Config, generator ran
 	r.Get("/{id}", h.Expand)
 	r.Post("/", h.Shorten)
 	r.Post("/api/shorten", h.ShortenAPI)
+	r.Post("/api/shorten/batch", h.ShortenBatchAPI)
 	r.Get("/api/user/urls", h.UserURLs)
 	r.Get("/ping", h.Ping)
 
@@ -88,7 +89,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(h.service.FormatShortURL(su)))
+	_, err = w.Write([]byte(h.service.FormatShortURL(su.ID)))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -126,7 +127,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	res := responses.ShorteningResult{Result: h.service.FormatShortURL(su)}
+	res := responses.ShorteningResult{Result: h.service.FormatShortURL(su.ID)}
 
 	out, err := json.Marshal(res)
 	if err != nil {
@@ -179,7 +180,7 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 	for _, URL := range URLs {
 		formattedURLs = append(
 			formattedURLs,
-			responses.UsersShortURL{ShortURL: h.service.FormatShortURL(URL), OriginalURL: URL.OriginalURL},
+			responses.UsersShortURL{ShortURL: h.service.FormatShortURL(URL.ID), OriginalURL: URL.OriginalURL},
 		)
 	}
 
@@ -242,6 +243,55 @@ func (h *Handler) getUserID(r *http.Request) string {
 
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	err := h.service.HealthCheck()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
+	var batch []models.ShortURL
+
+	reader, err := getDecompressedReader(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(reader).Decode(&batch); err != nil {
+		http.Error(w, "cannot decode json", http.StatusBadRequest)
+		return
+	}
+
+	userID := h.getUserID(r)
+
+	shortURLBatches, err := h.service.ShortenBatch(batch, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = h.addEncryptedUserIDToCookie(&w, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	res := make([]responses.ShorteningBatchResult, len(shortURLBatches))
+	for _, shortURLBatch := range shortURLBatches {
+		res = append(res, responses.ShorteningBatchResult{
+			CorrelationID: shortURLBatch.CorrelationID,
+			ShortURL:      h.service.FormatShortURL(shortURLBatch.ID),
+		})
+	}
+
+	out, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_, err = w.Write(out)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

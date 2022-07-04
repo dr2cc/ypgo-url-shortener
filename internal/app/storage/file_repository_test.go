@@ -96,7 +96,7 @@ func TestFileRepository_Save(t *testing.T) {
 				OriginalURL: "existing url",
 				ID:          "existing id",
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 
@@ -124,15 +124,103 @@ func TestFileRepository_Save(t *testing.T) {
 			err := repo.Save(tt.arg)
 			if tt.wantErr {
 				assert.Error(t, err)
-				savedURL, err := repo.GetByID(tt.arg.ID)
-				assert.NoError(t, err)
-				assert.NotEqual(t, tt.wantSaved, savedURL)
 			} else {
 				assert.NoError(t, err)
-				savedURL, err := repo.GetByID(tt.arg.ID)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantSaved, savedURL)
 			}
+			savedURL, err := repo.GetByID(tt.arg.ID)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantSaved, savedURL)
+		})
+	}
+}
+
+func TestFileRepository_SaveBatch(t *testing.T) {
+	tests := []struct {
+		name      string
+		arg       []models.ShortURL
+		wantErr   bool
+		wantSaved []models.ShortURL
+		userID    string
+	}{
+		{
+			name: "save new urls",
+			arg: []models.ShortURL{
+				{
+					OriginalURL: "new url",
+					ID:          "new id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "new url2",
+					ID:          "new id2",
+					CreatedByID: "user",
+				},
+			},
+			wantErr: false,
+			wantSaved: []models.ShortURL{
+				{
+					OriginalURL: "new url",
+					ID:          "new id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "new url2",
+					ID:          "new id2",
+					CreatedByID: "user",
+				},
+			},
+			userID: "user",
+		},
+		{
+			name: "save new urls with same id",
+			arg: []models.ShortURL{
+				{
+					OriginalURL: "new url",
+					ID:          "new id",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "new url2",
+					ID:          "new id2",
+					CreatedByID: "user2",
+				},
+			},
+			wantSaved: nil,
+			wantErr:   true,
+			userID:    "use2r",
+		},
+	}
+
+	filename := "./test_save_batch.json"
+	repo, err := NewFileRepository(filename)
+	require.NoError(t, err)
+	defer func(repo *FileRepository) {
+		err := repo.Close()
+		require.NoError(t, err)
+	}(repo)
+	defer func(name string) {
+		err := os.Remove(name)
+		require.NoError(t, err)
+	}(filename)
+
+	err = repo.Save(models.ShortURL{
+		OriginalURL: "existing url",
+		ID:          "existing id",
+		CreatedByID: "user existed",
+	})
+	require.NoError(t, err)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := repo.SaveBatch(tt.arg)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			savedURLs, err := repo.GetUsersUrls(tt.userID)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantSaved, savedURLs)
 		})
 	}
 }

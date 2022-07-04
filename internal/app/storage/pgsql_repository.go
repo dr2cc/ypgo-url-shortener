@@ -66,6 +66,18 @@ func (repo *PgRepository) Save(shortURL models.ShortURL) error {
 	return err
 }
 
+func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
+	_, err := repo.conn.CopyFrom(
+		context.Background(),
+		pgx.Identifier{"people"},
+		[]string{"original_url", "id", "created_by", "correlation_id"},
+		pgx.CopyFromSlice(len(batch), func(i int) ([]interface{}, error) {
+			return []interface{}{batch[i].OriginalURL, batch[i].ID, batch[i].CreatedByID, batch[i].CorrelationID}, nil
+		}),
+	)
+	return err
+}
+
 func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 	var model models.ShortURL
 	err := repo.conn.QueryRow(

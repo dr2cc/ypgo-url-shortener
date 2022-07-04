@@ -9,6 +9,11 @@ type MockRepo struct {
 	mock.Mock
 }
 
+func (m *MockRepo) SaveBatch(batch []models.ShortURL) error {
+	args := m.Called(batch)
+	return args.Error(0)
+}
+
 func (m *MockRepo) GetUsersUrls(id string) ([]models.ShortURL, error) {
 	args := m.Called(id)
 	if args.String(0) == "" && args.String(1) == "" {

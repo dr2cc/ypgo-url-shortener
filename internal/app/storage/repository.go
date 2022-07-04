@@ -11,6 +11,7 @@ type Repository interface {
 	GetUsersUrls(id string) ([]models.ShortURL, error)
 	Close() error
 	Check() error
+	SaveBatch(batch []models.ShortURL) error
 }
 
 func GetRepo(cfg *config.Config) Repository {

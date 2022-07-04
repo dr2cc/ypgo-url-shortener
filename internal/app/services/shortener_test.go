@@ -8,6 +8,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -124,6 +125,67 @@ func TestShortener_Shorten(t *testing.T) {
 	}
 }
 
+func TestShortener_ShortenBatch(t *testing.T) {
+	type args struct {
+		batch  []models.ShortURL
+		userID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []responses.ShorteningBatchResult
+		wantErr bool
+	}{
+		{
+			name: "short batch urls",
+			args: args{
+				batch: []models.ShortURL{
+					{CorrelationID: "corID", OriginalURL: "origURL"},
+					{CorrelationID: "corID2", OriginalURL: "origURL2"},
+				},
+			},
+			want: []responses.ShorteningBatchResult{
+				{CorrelationID: "corID", ShortURL: "http://localhost:8080/id"},
+				{CorrelationID: "corID2", ShortURL: "http://localhost:8080/id2"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "short batch urls failed on saving",
+			args: args{
+				batch: []models.ShortURL{
+					{CorrelationID: "corID", OriginalURL: "errorURL"},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rm := new(mocks.MockRepo)
+			rm.On("SaveBatch", tt.args.batch).Return(nil)
+
+			gm := new(mocks.MockGen)
+			gm.On("GenerateIDFromString", "origURL").Return("id", nil)
+			gm.On("GenerateIDFromString", "origURL2").Return("id2", nil)
+			gm.On("GenerateIDFromString", "errorURL").Return("", errors.New(""))
+
+			service := New(
+				rm,
+				gm,
+				config.New(),
+			)
+
+			got, err := service.ShortenBatch(tt.args.batch, tt.args.userID)
+			if !tt.wantErr {
+				assert.NoError(t, err)
+			}
+			assert.ObjectsAreEqual(tt.want, got)
+		})
+	}
+}
+
 func TestShortener_GetShortURL(t *testing.T) {
 	type fields struct {
 		OriginalURL string
@@ -157,7 +219,7 @@ func TestShortener_GetShortURL(t *testing.T) {
 				ID:          tt.fields.ID,
 			}
 
-			shortURL := service.FormatShortURL(model)
+			shortURL := service.FormatShortURL(model.ID)
 
 			assert.Equal(t, tt.want, shortURL)
 		})

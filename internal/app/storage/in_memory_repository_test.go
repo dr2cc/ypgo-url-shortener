@@ -125,6 +125,93 @@ func TestInMemoryRepository_Save(t *testing.T) {
 	}
 }
 
+func TestInMemoryRepository_SaveBatch(t *testing.T) {
+	type fields struct {
+		storage map[string]models.ShortURL
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		arg         []models.ShortURL
+		wantErr     bool
+		wantStorage map[string]models.ShortURL
+	}{
+		{
+			name:   "save new url with id",
+			fields: fields{storage: map[string]models.ShortURL{}},
+			arg: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "1",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "2",
+				},
+			},
+			wantStorage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "1",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "save new url with same id",
+			fields: fields{
+				storage: map[string]models.ShortURL{
+					"id": {
+						OriginalURL: "some url",
+						ID:          "id",
+						CreatedByID: "1",
+					},
+				},
+			},
+			arg: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "1",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "2",
+				},
+			},
+			wantStorage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "some url",
+					ID:          "id",
+					CreatedByID: "1",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &InMemoryRepository{
+				storage: tt.fields.storage,
+			}
+			err := repo.SaveBatch(tt.arg)
+			if !tt.wantErr {
+				require.NoError(t, err)
+			}
+			assert.ObjectsAreEqual(tt.wantStorage, repo.storage)
+		})
+	}
+}
+
 func TestNewInMemoryRepository(t *testing.T) {
 	t.Run("in memory repo init", func(t *testing.T) {
 		repo := NewInMemoryRepository()
