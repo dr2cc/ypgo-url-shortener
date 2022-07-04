@@ -64,13 +64,13 @@ func (service *Shortener) HealthCheck() error {
 }
 
 func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
-	for _, URL := range batch {
+	for i, URL := range batch {
 		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
 		if err != nil {
 			return nil, err
 		}
-		URL.ID = urlID
-		URL.CreatedByID = userID
+		batch[i].ID = urlID
+		batch[i].CreatedByID = userID
 	}
 
 	err := service.repository.SaveBatch(batch)

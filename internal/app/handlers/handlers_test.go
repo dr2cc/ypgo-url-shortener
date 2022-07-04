@@ -463,6 +463,107 @@ func TestHandler_ShortenAPI(t *testing.T) {
 	}
 }
 
+func TestHandler_ShortenBatchAPI(t *testing.T) {
+	type want struct {
+		statusCode  int
+		body        string
+		contentType string
+	}
+	tests := []struct {
+		name   string
+		want   want
+		body   string
+		method string
+	}{
+		{
+			name: "post with url",
+			want: want{
+				statusCode:  http.StatusCreated,
+				body:        "[{\"correlation_id\":\"corId1\",\"short_url\":\"http://localhost:8080/id1\"},{\"correlation_id\":\"corId2\",\"short_url\":\"http://localhost:8080/id2\"}]",
+				contentType: "application/json",
+			},
+			method: http.MethodPost,
+			body:   "[{\"correlation_id\":\"corId1\",\"original_url\":\"url1\"},{\"correlation_id\":\"corId2\",\"original_url\":\"url2\"}]",
+		},
+		{
+			name: "post without url",
+			want: want{
+				statusCode: http.StatusBadRequest,
+				body:       "url required",
+			},
+			method: http.MethodPost,
+			body:   "[{\"correlation_id\":\"corId1\",\"original_url\":\"\"},{\"correlation_id\":\"cor2\",\"original_url\":\"url2\"}]",
+		},
+		{
+			name: "post without json",
+			want: want{
+				statusCode: http.StatusBadRequest,
+				body:       "cannot decode json",
+			},
+			method: http.MethodPost,
+			body:   "url",
+		},
+		{
+			name: "not supported method",
+			want: want{
+				statusCode: http.StatusMethodNotAllowed,
+				body:       "",
+			},
+			method: http.MethodGet,
+			body:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockRepo)
+			mockRepo.On("SaveBatch", []models.ShortURL{
+				{
+					OriginalURL:   "url1",
+					ID:            "id1",
+					CreatedByID:   "user id",
+					CorrelationID: "corId1",
+				},
+				{
+					OriginalURL:   "url2",
+					ID:            "id2",
+					CreatedByID:   "user id",
+					CorrelationID: "corId2",
+				},
+			}).Return(nil)
+			mockGen := new(mocks.MockGen)
+			mockGen.On("GenerateIDFromString", "url1").Return("id1", nil)
+			mockGen.On("GenerateIDFromString", "url2").Return("id2", nil)
+
+			mockGenID := new(mocks.MockUserIDGenerator)
+			mockGenID.On("GenerateUserID").Return("user id")
+
+			cfg := config.New()
+			service := services.New(mockRepo, mockGen, cfg)
+			r := NewRouter(service, cfg, mockGenID)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			result, body := testRequest(t, ts, tt.method, "/api/shorten/batch", tt.body, nil)
+			defer result.Body.Close()
+
+			if tt.want.contentType != "" {
+				assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			}
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.body, body)
+
+			result, body = testGzippedRequest(t, ts, tt.method, "/api/shorten/batch", tt.body)
+			defer result.Body.Close()
+
+			if tt.want.contentType != "" {
+				assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			}
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.body, body)
+		})
+	}
+}
+
 func TestHandler_getUserID(t *testing.T) {
 	tests := []struct {
 		name           string
