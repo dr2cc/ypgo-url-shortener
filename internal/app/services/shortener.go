@@ -23,10 +23,10 @@ func (err *shorteningError) Unwrap() error {
 	return err.Err
 }
 
-func NewShorteningError(shortUrl models.ShortURL, err error) error {
+func NewShorteningError(shortURL models.ShortURL, err error) error {
 	return &shorteningError{
 		Err:      err,
-		ShortURL: shortUrl,
+		ShortURL: shortURL,
 	}
 }
 
@@ -57,7 +57,7 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 	}
 
 	err = service.repository.Save(shortURL)
-	var notUniqueErr *storage.NotUniqueUrlError
+	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		return shortURL, NewShorteningError(shortURL, err)
 	}

@@ -79,7 +79,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 
 	su, err := h.service.Shorten(string(url), userID)
-	var notUniqueErr *storage.NotUniqueUrlError
+	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		writeShorteningResult(w, h, su, http.StatusConflict)
 		return
@@ -128,7 +128,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 
 	su, err := h.service.Shorten(v.OriginalURL, userID)
-	var notUniqueErr *storage.NotUniqueUrlError
+	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		writeShorteningAPIResult(w, h, su, http.StatusConflict)
 		return

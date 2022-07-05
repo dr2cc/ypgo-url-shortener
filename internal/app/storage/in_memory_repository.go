@@ -26,7 +26,7 @@ func (repo *InMemoryRepository) SaveBatch(batch []models.ShortURL) error {
 	for _, shortURL := range batch {
 		_, ok := repo.storage[shortURL.ID]
 		if ok {
-			return NewNotUniqueUrlError(shortURL, nil)
+			return NewNotUniqueURLError(shortURL, nil)
 		}
 	}
 
@@ -43,7 +43,7 @@ func (repo *InMemoryRepository) Save(shortURL models.ShortURL) error {
 	repo.mutex.RUnlock()
 
 	if ok {
-		return NewNotUniqueUrlError(shortURL, nil)
+		return NewNotUniqueURLError(shortURL, nil)
 	}
 
 	repo.mutex.Lock()

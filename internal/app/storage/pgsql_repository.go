@@ -69,7 +69,7 @@ func (repo *PgRepository) Save(shortURL models.ShortURL) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		if pgErr.Code == pgerrcode.UniqueViolation {
-			return NewNotUniqueUrlError(shortURL, err)
+			return NewNotUniqueURLError(shortURL, err)
 		}
 	}
 	return err
