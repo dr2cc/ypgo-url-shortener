@@ -2,9 +2,11 @@ package storage
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -42,13 +44,12 @@ func runMigrations(conn *pgx.Conn) error {
 		}
 	}()
 
-	t, err := conn.Exec(context.Background(), "create table if not exists urls("+
+	_, err = conn.Exec(context.Background(), "create table if not exists urls("+
 		"created_by varchar(36) not null, "+
-		"original_url varchar not null, "+
+		"original_url varchar unique not null, "+
 		"id varchar(12) unique not null, "+
 		"correlation_id varchar"+
 		");")
-	fmt.Println(t)
 	if err != nil {
 		return err
 	}
@@ -64,6 +65,13 @@ func (repo *PgRepository) Save(shortURL models.ShortURL) error {
 		shortURL.ID,
 		shortURL.CreatedByID,
 	)
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == pgerrcode.UniqueViolation {
+			return NewNotUniqueUrlError(shortURL, err)
+		}
+	}
 	return err
 }
 

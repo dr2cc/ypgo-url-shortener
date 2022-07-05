@@ -18,6 +18,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
+	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -311,6 +312,15 @@ func TestHandler_Shorten(t *testing.T) {
 			method: http.MethodPost,
 			body:   "error_on_shortening",
 		},
+		{
+			name: "it returns 409 when url already exists",
+			want: want{
+				statusCode: http.StatusConflict,
+				body:       "http://localhost:8080/id",
+			},
+			method: http.MethodPost,
+			body:   "existingURL",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -320,8 +330,14 @@ func TestHandler_Shorten(t *testing.T) {
 				ID:          "id",
 				CreatedByID: "user id",
 			}).Return(nil)
+			mockRepo.On("Save", models.ShortURL{
+				OriginalURL: "existingURL",
+				ID:          "id",
+				CreatedByID: "user id",
+			}).Return(storage.ErrNotUnique)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
+			mockGen.On("GenerateIDFromString", "existingURL").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
@@ -419,6 +435,15 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			method: http.MethodPost,
 			body:   "{\"url\":\"error_on_shortening\"}",
 		},
+		{
+			name: "it returns 409 when url already exists",
+			want: want{
+				statusCode: http.StatusConflict,
+				body:       "{\"result\":\"http://localhost:8080/id\"}",
+			},
+			method: http.MethodPost,
+			body:   "{\"url\":\"existingURL\"}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -428,9 +453,15 @@ func TestHandler_ShortenAPI(t *testing.T) {
 				ID:          "id",
 				CreatedByID: "user id",
 			}).Return(nil)
+			mockRepo.On("Save", models.ShortURL{
+				OriginalURL: "existingURL",
+				ID:          "id",
+				CreatedByID: "user id",
+			}).Return(storage.ErrNotUnique)
 			mockGen := new(mocks.MockGen)
 			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
+			mockGen.On("GenerateIDFromString", "existingURL").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
 			mockGenID := new(mocks.MockUserIDGenerator)

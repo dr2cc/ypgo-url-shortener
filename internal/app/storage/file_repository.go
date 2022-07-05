@@ -35,7 +35,7 @@ func (repo *FileRepository) SaveBatch(batch []models.ShortURL) error {
 	for _, shortURL := range batch {
 		_, err := repo.GetByID(shortURL.ID)
 		if err == nil {
-			return errors.New("not unique id " + shortURL.ID)
+			return NewNotUniqueUrlError(shortURL, nil)
 		}
 	}
 
@@ -68,7 +68,7 @@ func (repo *FileRepository) SaveBatch(batch []models.ShortURL) error {
 func (repo *FileRepository) Save(shortURL models.ShortURL) error {
 	_, err := repo.GetByID(shortURL.ID)
 	if err == nil {
-		return errors.New("not unique id " + shortURL.ID)
+		return NewNotUniqueUrlError(shortURL, nil)
 	}
 
 	data, err := json.Marshal(shortURL)

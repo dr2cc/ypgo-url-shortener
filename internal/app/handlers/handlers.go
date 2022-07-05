@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
+	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -77,6 +79,11 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 
 	su, err := h.service.Shorten(string(url), userID)
+	var notUniqueErr *storage.NotUniqueUrlError
+	if errors.As(err, &notUniqueErr) {
+		writeShorteningResult(w, h, su, http.StatusConflict)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -87,9 +94,13 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	writeShorteningResult(w, h, su, http.StatusCreated)
+}
+
+func writeShorteningResult(w http.ResponseWriter, h *Handler, su models.ShortURL, status int) {
 	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(h.service.FormatShortURL(su.ID)))
+	w.WriteHeader(status)
+	_, err := w.Write([]byte(h.service.FormatShortURL(su.ID)))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -117,6 +128,11 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 
 	su, err := h.service.Shorten(v.OriginalURL, userID)
+	var notUniqueErr *storage.NotUniqueUrlError
+	if errors.As(err, &notUniqueErr) {
+		writeShorteningAPIResult(w, h, su, http.StatusConflict)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -127,6 +143,10 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	writeShorteningAPIResult(w, h, su, http.StatusCreated)
+}
+
+func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, su models.ShortURL, status int) {
 	res := responses.ShorteningResult{Result: h.service.FormatShortURL(su.ID)}
 
 	out, err := json.Marshal(res)
@@ -136,7 +156,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(status)
 	_, err = w.Write(out)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

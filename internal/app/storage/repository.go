@@ -5,6 +5,28 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
+type NotUniqueUrlError struct {
+	Err      error
+	ShortURL models.ShortURL
+}
+
+func (err *NotUniqueUrlError) Error() string {
+	return "url or id are already exist"
+}
+
+func (err *NotUniqueUrlError) Unwrap() error {
+	return err.Err
+}
+
+func NewNotUniqueUrlError(shortUrl models.ShortURL, err error) error {
+	return &NotUniqueUrlError{
+		Err:      err,
+		ShortURL: shortUrl,
+	}
+}
+
+var ErrNotUnique = func() error { return &NotUniqueUrlError{} }()
+
 type Repository interface {
 	Save(shortURL models.ShortURL) error
 	GetByID(id string) (models.ShortURL, error)

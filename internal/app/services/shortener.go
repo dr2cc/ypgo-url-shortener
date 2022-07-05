@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
@@ -8,6 +9,26 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
+
+type shorteningError struct {
+	Err      error
+	ShortURL models.ShortURL
+}
+
+func (err *shorteningError) Error() string {
+	return fmt.Sprintf("error while shortening: %v", err.Err)
+}
+
+func (err *shorteningError) Unwrap() error {
+	return err.Err
+}
+
+func NewShorteningError(shortUrl models.ShortURL, err error) error {
+	return &shorteningError{
+		Err:      err,
+		ShortURL: shortUrl,
+	}
+}
 
 type Shortener struct {
 	repository storage.Repository
@@ -36,6 +57,10 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 	}
 
 	err = service.repository.Save(shortURL)
+	var notUniqueErr *storage.NotUniqueUrlError
+	if errors.As(err, &notUniqueErr) {
+		return shortURL, NewShorteningError(shortURL, err)
+	}
 	if err != nil {
 		return models.ShortURL{}, err
 	}

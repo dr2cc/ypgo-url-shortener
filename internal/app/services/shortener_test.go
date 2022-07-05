@@ -9,6 +9,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
+	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,10 +65,11 @@ func TestShortener_Shorten(t *testing.T) {
 		url string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *models.ShortURL
-		wantErr bool
+		name        string
+		args        args
+		want        *models.ShortURL
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name: "generate short link from url",
@@ -90,6 +92,13 @@ func TestShortener_Shorten(t *testing.T) {
 			want:    &models.ShortURL{},
 			wantErr: true,
 		},
+		{
+			name:        "it returns correct err when original url is not unique",
+			args:        args{url: "fail"},
+			want:        &models.ShortURL{},
+			wantErr:     true,
+			expectedErr: storage.ErrNotUnique,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,7 +112,7 @@ func TestShortener_Shorten(t *testing.T) {
 			rm.On("Save", models.ShortURL{
 				OriginalURL: "fail",
 				ID:          "id",
-			}).Return(errors.New(""))
+			}).Return(storage.ErrNotUnique)
 
 			gm := new(mocks.MockGen)
 			gm.On("GenerateIDFromString", "url").Return("id", nil)
@@ -119,6 +128,11 @@ func TestShortener_Shorten(t *testing.T) {
 			got, err := service.Shorten(tt.args.url, "")
 			if !tt.wantErr {
 				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				if tt.expectedErr != nil {
+					assert.ErrorIs(t, err, tt.expectedErr)
+				}
 			}
 			assert.ObjectsAreEqual(tt.want, got)
 		})
