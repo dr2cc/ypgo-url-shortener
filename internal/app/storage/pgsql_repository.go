@@ -22,8 +22,8 @@ func NewPgRepository(dsn string) (*PgRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = runMigrations(conn)
-	if err != nil {
+
+	if err = runMigrations(conn); err != nil {
 		return nil, err
 	}
 	return &PgRepository{
@@ -112,8 +112,7 @@ func (repo *PgRepository) GetUsersUrls(userID string) ([]models.ShortURL, error)
 
 	for rows.Next() {
 		var entry models.ShortURL
-		err = rows.Scan(&entry)
-		if err != nil {
+		if err = rows.Scan(&entry); err != nil {
 			return nil, err
 		}
 		URLs = append(URLs, entry)

@@ -39,8 +39,7 @@ func TestGetRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.IsType(t, tt.want, GetRepo(tt.args.cfg))
-			err := os.Remove("some-path")
-			if err != nil {
+			if err := os.Remove("some-path"); err != nil {
 				return
 			}
 		})

@@ -8,8 +8,7 @@ import (
 
 func GenerateRandom(size int) ([]byte, error) {
 	b := make([]byte, size)
-	_, err := rand.Read(b)
-	if err != nil {
+	if _, err := rand.Read(b); err != nil {
 		return nil, err
 	}
 

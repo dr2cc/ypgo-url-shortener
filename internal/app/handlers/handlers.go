@@ -78,10 +78,10 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	su, err := h.service.Shorten(string(url), userID)
+	shortURL, err := h.service.Shorten(string(url), userID)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
-		writeShorteningResult(w, h, su, http.StatusConflict)
+		writeShorteningResult(w, h, shortURL, http.StatusConflict)
 		return
 	}
 	if err != nil {
@@ -89,19 +89,18 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.addEncryptedUserIDToCookie(&w, userID)
-	if err != nil {
+	if err = h.addEncryptedUserIDToCookie(&w, userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	writeShorteningResult(w, h, su, http.StatusCreated)
+	writeShorteningResult(w, h, shortURL, http.StatusCreated)
 }
 
-func writeShorteningResult(w http.ResponseWriter, h *Handler, su models.ShortURL, status int) {
+func writeShorteningResult(w http.ResponseWriter, h *Handler, shortURL models.ShortURL, status int) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(status)
-	_, err := w.Write([]byte(h.service.FormatShortURL(su.ID)))
-	if err != nil {
+	shortenedURL := h.service.FormatShortURL(shortURL.ID)
+	if _, err := w.Write([]byte(shortenedURL)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -127,10 +126,10 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	su, err := h.service.Shorten(v.OriginalURL, userID)
+	shortURL, err := h.service.Shorten(v.OriginalURL, userID)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
-		writeShorteningAPIResult(w, h, su, http.StatusConflict)
+		writeShorteningAPIResult(w, h, shortURL, http.StatusConflict)
 		return
 	}
 	if err != nil {
@@ -138,16 +137,15 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.addEncryptedUserIDToCookie(&w, userID)
-	if err != nil {
+	if err = h.addEncryptedUserIDToCookie(&w, userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	writeShorteningAPIResult(w, h, su, http.StatusCreated)
+	writeShorteningAPIResult(w, h, shortURL, http.StatusCreated)
 }
 
-func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, su models.ShortURL, status int) {
-	res := responses.ShorteningResult{Result: h.service.FormatShortURL(su.ID)}
+func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, shortURL models.ShortURL, status int) {
+	res := responses.ShorteningResult{Result: h.service.FormatShortURL(shortURL.ID)}
 
 	out, err := json.Marshal(res)
 	if err != nil {
@@ -157,8 +155,8 @@ func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, su models.Short
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_, err = w.Write(out)
-	if err != nil {
+
+	if _, err = w.Write(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -211,8 +209,7 @@ func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(out)
-	if err != nil {
+	if _, err = w.Write(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -307,8 +304,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.addEncryptedUserIDToCookie(&w, userID)
-	if err != nil {
+	if err = h.addEncryptedUserIDToCookie(&w, userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -328,8 +324,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write(out)
-	if err != nil {
+	if _, err = w.Write(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

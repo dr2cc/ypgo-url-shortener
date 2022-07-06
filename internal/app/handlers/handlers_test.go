@@ -75,13 +75,11 @@ func testGzippedRequest(t *testing.T, ts *httptest.Server, method, path string, 
 
 	w, _ := gzip.NewWriterLevel(&b, gzip.BestCompression)
 
-	_, err = w.Write([]byte(body))
-	if err != nil {
+	if _, err = w.Write([]byte(body)); err != nil {
 		return nil, err.Error()
 	}
 
-	err = w.Close()
-	if err != nil {
+	if err = w.Close(); err != nil {
 		return nil, err.Error()
 	}
 

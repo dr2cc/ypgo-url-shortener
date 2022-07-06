@@ -98,8 +98,7 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	_, err := repo.file.Seek(0, io.SeekStart)
-	if err != nil {
+	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
 		return models.ShortURL{}, err
 	}
 
@@ -109,8 +108,7 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
-		if err != nil {
+		if err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry); err != nil {
 			return models.ShortURL{}, err
 		}
 		if entry.ID == id {
@@ -125,8 +123,7 @@ func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, err := repo.file.Seek(0, io.SeekStart)
-	if err != nil {
+	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
@@ -137,8 +134,7 @@ func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry)
-		if err != nil {
+		if err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry); err != nil {
 			return nil, err
 		}
 		if entry.CreatedByID == id {

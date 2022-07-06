@@ -26,18 +26,17 @@ func (HashGenerator) GenerateIDFromString(str string) (string, error) {
 func toBase62(id uint32) string {
 	var i big.Int
 	size := 8
-	b := make([]byte, size)
-	binary.LittleEndian.PutUint32(b, id)
-	i.SetBytes(b)
+	bytes := make([]byte, size)
+	binary.LittleEndian.PutUint32(bytes, id)
+	i.SetBytes(bytes)
 	base := 62
 	return i.Text(base)
 }
 
 func hashURL(url string) (uint32, error) {
-	h := fnv.New32a()
-	_, err := h.Write([]byte(url))
-	if err != nil {
+	hash := fnv.New32a()
+	if _, err := hash.Write([]byte(url)); err != nil {
 		return 0, err
 	}
-	return h.Sum32(), nil
+	return hash.Sum32(), nil
 }

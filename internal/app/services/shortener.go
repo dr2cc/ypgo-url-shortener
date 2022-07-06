@@ -98,8 +98,7 @@ func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) (
 		batch[i].CreatedByID = userID
 	}
 
-	err := service.repository.SaveBatch(batch)
-	if err != nil {
+	if err := service.repository.SaveBatch(batch); err != nil {
 		return nil, err
 	}
 
