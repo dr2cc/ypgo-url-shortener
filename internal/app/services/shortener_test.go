@@ -45,9 +45,12 @@ func TestShortener_Expand(t *testing.T) {
 			rm.On("GetByID", "id").Return("url", nil)
 			rm.On("GetByID", "missing").Return("", errors.New(""))
 
+			rg := new(mocks.MockRandom)
+
 			service := New(
 				rm,
 				new(mocks.MockGen),
+				rg,
 				config.New(),
 			)
 
@@ -119,9 +122,12 @@ func TestShortener_Shorten(t *testing.T) {
 			gm.On("GenerateIDFromString", "fail").Return("id", nil)
 			gm.On("GenerateIDFromString", "").Return("", errors.New(""))
 
+			rg := new(mocks.MockRandom)
+
 			service := New(
 				rm,
 				gm,
+				rg,
 				config.New(),
 			)
 
@@ -185,9 +191,12 @@ func TestShortener_ShortenBatch(t *testing.T) {
 			gm.On("GenerateIDFromString", "origURL2").Return("id2", nil)
 			gm.On("GenerateIDFromString", "errorURL").Return("", errors.New(""))
 
+			rg := new(mocks.MockRandom)
+
 			service := New(
 				rm,
 				gm,
+				rg,
 				config.New(),
 			)
 
@@ -223,9 +232,12 @@ func TestShortener_GetShortURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rm := new(mocks.MockRepo)
 			gm := new(mocks.MockGen)
+			rg := new(mocks.MockRandom)
+
 			service := New(
 				rm,
 				gm,
+				rg,
 				cfg,
 			)
 			model := models.ShortURL{

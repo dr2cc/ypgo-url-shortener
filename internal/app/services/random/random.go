@@ -6,7 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateRandom(size int) ([]byte, error) {
+type Generator interface {
+	GenerateRandomBytes(size int) ([]byte, error)
+	GenerateNewUserID() string
+}
+
+type TrulyRandomGenerator struct{}
+
+func (g *TrulyRandomGenerator) GenerateRandomBytes(size int) ([]byte, error) {
 	b := make([]byte, size)
 	if _, err := rand.Read(b); err != nil {
 		return nil, err
@@ -15,12 +22,6 @@ func GenerateRandom(size int) ([]byte, error) {
 	return b, nil
 }
 
-type UserIDGenerator interface {
-	GenerateUserID() string
-}
-
-type UUIDGenerator struct{}
-
-func (g *UUIDGenerator) GenerateUserID() string {
+func (g *TrulyRandomGenerator) GenerateNewUserID() string {
 	return uuid.NewString()
 }

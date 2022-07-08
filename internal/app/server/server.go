@@ -7,17 +7,15 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/handlers"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
-	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
 type Server struct {
-	config      *config.Config
-	service     *services.Shortener
-	idGenerator random.UserIDGenerator
+	config  *config.Config
+	service *services.Shortener
 }
 
 func (s *Server) Run() {
-	r := handlers.NewRouter(s.service, s.config, s.idGenerator)
+	r := handlers.NewRouter(s.service, s.config)
 
 	httpServer := &http.Server{
 		Addr:    s.config.ServerAddress,
@@ -26,10 +24,9 @@ func (s *Server) Run() {
 	log.Fatal(httpServer.ListenAndServe())
 }
 
-func New(config *config.Config, service *services.Shortener, generator *random.UUIDGenerator) *Server {
+func New(config *config.Config, service *services.Shortener) *Server {
 	return &Server{
-		config:      config,
-		service:     service,
-		idGenerator: generator,
+		config:  config,
+		service: service,
 	}
 }

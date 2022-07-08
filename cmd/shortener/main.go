@@ -20,9 +20,9 @@ func main() {
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
 	defer repo.Close()
-	service := services.New(repo, gen, cfg)
-	userIDGenerator := &random.UUIDGenerator{}
-	srv := server.New(cfg, service, userIDGenerator)
+	random := &random.TrulyRandomGenerator{}
+	service := services.New(repo, gen, random, cfg)
+	srv := server.New(cfg, service)
 
 	srv.Run()
 }

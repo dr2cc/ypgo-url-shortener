@@ -9,7 +9,8 @@ import (
 )
 
 type GCMAESCryptographer struct {
-	Key []byte
+	Key    []byte
+	Random random.Generator
 }
 
 func (c *GCMAESCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
@@ -23,7 +24,7 @@ func (c *GCMAESCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce, err := random.GenerateRandom(aesgcm.NonceSize())
+	nonce, err := c.Random.GenerateRandomBytes(aesgcm.NonceSize())
 	if err != nil {
 		return nil, err
 	}

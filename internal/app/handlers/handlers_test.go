@@ -178,12 +178,12 @@ func TestHandler_Expand(t *testing.T) {
 
 			mockGen := new(mocks.MockGen)
 
-			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserID").Return("user id")
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateNewUserId").Return("user id")
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -235,15 +235,16 @@ func TestHandler_UserURLs(t *testing.T) {
 			mockRepo.On("GetUsersUrls", "user id without urls").Return("", "")
 
 			mockGen := new(mocks.MockGen)
-			mockGenID := new(mocks.MockUserIDGenerator)
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateRandomBytes", 12).Return()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			cryptographer := crypto.GCMAESCryptographer{Key: cfg.EncryptionKey}
+			cryptographer := crypto.GCMAESCryptographer{Key: cfg.EncryptionKey, Random: rg}
 			encryptedCookieValue, _ := cryptographer.Encrypt([]byte(tt.userID))
 			cookies := map[string]string{
 				UserIDCookieName: hex.EncodeToString(encryptedCookieValue),
@@ -339,12 +340,13 @@ func TestHandler_Shorten(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
-			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserID").Return("user id")
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateNewUserID").Return("user id")
+			rg.On("GenerateRandomBytes", 12).Return()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -462,12 +464,13 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "existingURL").Return("id", nil)
 			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
 
-			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserID").Return("user id")
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateNewUserID").Return("user id")
+			rg.On("GenerateRandomBytes", 12).Return()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -563,12 +566,13 @@ func TestHandler_ShortenBatchAPI(t *testing.T) {
 			mockGen.On("GenerateIDFromString", "url1").Return("id1", nil)
 			mockGen.On("GenerateIDFromString", "url2").Return("id2", nil)
 
-			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserID").Return("user id")
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateNewUserID").Return("user id")
+			rg.On("GenerateRandomBytes", 12).Return()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -623,12 +627,13 @@ func TestHandler_getUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mocks.MockRepo)
 			mockGen := new(mocks.MockGen)
-			mockGenID := new(mocks.MockUserIDGenerator)
-			mockGenID.On("GenerateUserID").Return("new user id")
+			rg := new(mocks.MockRandom)
+			rg.On("GenerateNewUserID").Return("new user id")
+			rg.On("GenerateRandomBytes", 12).Return()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, cfg)
-			r := NewRouter(service, cfg, mockGenID)
+			service := services.New(mockRepo, mockGen, rg, cfg)
+			r := NewRouter(service, cfg)
 
 			ts := httptest.NewServer(r)
 			defer ts.Close()
@@ -639,7 +644,7 @@ func TestHandler_getUserID(t *testing.T) {
 
 			req.Header.Set("Content-Type", "application/json")
 
-			h := NewHandler(service, cfg, mockGenID)
+			h := NewHandler(service, cfg)
 
 			if tt.cookieRawValue != "" {
 				encryptedCookieValue, err := h.crypto.Encrypt([]byte(tt.cookieRawValue))

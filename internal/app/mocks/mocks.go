@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"crypto/rand"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/stretchr/testify/mock"
 )
@@ -49,11 +51,21 @@ func (m *MockGen) GenerateIDFromString(str string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-type MockUserIDGenerator struct {
+type MockRandom struct {
 	mock.Mock
 }
 
-func (m *MockUserIDGenerator) GenerateUserID() string {
+func (m *MockRandom) GenerateRandomBytes(size int) ([]byte, error) {
+	m.Called(size)
+	b := make([]byte, size)
+	if _, err := rand.Read(b); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (m *MockRandom) GenerateNewUserID() string {
 	args := m.Called()
 	return args.String(0)
 }

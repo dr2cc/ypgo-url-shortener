@@ -7,6 +7,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
 
@@ -31,16 +32,23 @@ func NewShorteningError(shortURL models.ShortURL, err error) error {
 }
 
 type Shortener struct {
+	Random     random.Generator
 	repository storage.Repository
-	generator  generator.Generator
+	generator  generator.URLGenerator
 	config     *config.Config
 }
 
-func New(repository storage.Repository, generator generator.Generator, config *config.Config) *Shortener {
+func New(
+	repository storage.Repository,
+	generator generator.URLGenerator,
+	random random.Generator,
+	config *config.Config,
+) *Shortener {
 	return &Shortener{
 		repository: repository,
 		generator:  generator,
 		config:     config,
+		Random:     random,
 	}
 }
 
@@ -103,4 +111,8 @@ func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) (
 	}
 
 	return batch, nil
+}
+
+func (service *Shortener) GenerateNewUserID() string {
+	return service.Random.GenerateNewUserID()
 }

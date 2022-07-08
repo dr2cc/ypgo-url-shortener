@@ -1,5 +1,5 @@
 package generator
 
-type Generator interface {
+type URLGenerator interface {
 	GenerateIDFromString(url string) (string, error)
 }

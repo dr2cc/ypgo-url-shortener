@@ -8,6 +8,8 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
+const KeySize = 2 * aes.BlockSize //nolint:gomnd
+
 type Config struct {
 	BaseURL       string
 	ServerAddress string
@@ -17,18 +19,27 @@ type Config struct {
 }
 
 func New() *Config {
-	size := 2 * aes.BlockSize //nolint:gomnd
-	randomKey, err := random.GenerateRandom(size)
-	if err != nil {
-		randomKey = make([]byte, size)
+	key := []byte(getEnv("ENCRYPTION_KEY", ""))
+	if len(key) == 0 {
+		key = generateNewEncryptionKey()
 	}
+
 	return &Config{
 		BaseURL:       "http://localhost:8080",
 		ServerAddress: ":8080",
 		FilePath:      "",
-		EncryptionKey: randomKey,
+		EncryptionKey: key,
 		DatabaseDSN:   "",
 	}
+}
+
+func generateNewEncryptionKey() []byte {
+	randomGenerator := random.TrulyRandomGenerator{}
+	randomKey, err := randomGenerator.GenerateRandomBytes(KeySize)
+	if err != nil {
+		randomKey = make([]byte, KeySize)
+	}
+	return randomKey
 }
 
 func (c *Config) Init() {

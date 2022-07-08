@@ -14,7 +14,6 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
-	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,14 +21,14 @@ import (
 
 const UserIDCookieName = "shortener-user-id"
 
-func NewRouter(service *services.Shortener, config *config.Config, generator random.UserIDGenerator) chi.Router {
+func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(flate.BestSpeed))
 
-	h := NewHandler(service, config, generator)
+	h := NewHandler(service, config)
 
 	r.Get("/{id}", h.Expand)
 	r.Post("/", h.Shorten)
@@ -42,19 +41,17 @@ func NewRouter(service *services.Shortener, config *config.Config, generator ran
 }
 
 type Handler struct {
-	Mux             *chi.Mux
-	service         *services.Shortener
-	crypto          crypto.Cryptographer
-	userIDGenerator random.UserIDGenerator
+	Mux     *chi.Mux
+	service *services.Shortener
+	crypto  crypto.Cryptographer
 }
 
-func NewHandler(service *services.Shortener, config *config.Config, userIDGenerator random.UserIDGenerator) *Handler {
-	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey}
+func NewHandler(service *services.Shortener, config *config.Config) *Handler {
+	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey, Random: service.Random}
 	return &Handler{
-		Mux:             chi.NewMux(),
-		service:         service,
-		crypto:          &cryptographer,
-		userIDGenerator: userIDGenerator,
+		Mux:     chi.NewMux(),
+		service: service,
+		crypto:  &cryptographer,
 	}
 }
 
@@ -242,17 +239,17 @@ func (h *Handler) addEncryptedUserIDToCookie(w *http.ResponseWriter, userID stri
 func (h *Handler) getUserID(r *http.Request) string {
 	encodedCookie, err := r.Cookie(UserIDCookieName)
 	if err != nil {
-		return h.userIDGenerator.GenerateUserID()
+		return h.service.GenerateNewUserID()
 	}
 
 	decodedCookie, err := hex.DecodeString(encodedCookie.Value)
 	if err != nil {
-		return h.userIDGenerator.GenerateUserID()
+		return h.service.GenerateNewUserID()
 	}
 
 	decryptedUserID, err := h.crypto.Decrypt(decodedCookie)
 	if err != nil {
-		return h.userIDGenerator.GenerateUserID()
+		return h.service.GenerateNewUserID()
 	}
 
 	return string(decryptedUserID)
