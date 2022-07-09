@@ -3,14 +3,16 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
 )
-
-const lockNum = int64(9628173550095224)
 
 type PgRepository struct {
 	Dsn  string
@@ -23,7 +25,7 @@ func NewPgRepository(dsn string) (*PgRepository, error) {
 		return nil, err
 	}
 
-	if err = runMigrations(conn); err != nil {
+	if err = runMigrations(dsn); err != nil {
 		return nil, err
 	}
 	return &PgRepository{
@@ -32,28 +34,22 @@ func NewPgRepository(dsn string) (*PgRepository, error) {
 	}, nil
 }
 
-func runMigrations(conn *pgx.Conn) error {
-	err := acquireAdvisoryLock(context.Background(), conn)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		unlockErr := releaseAdvisoryLock(context.Background(), conn)
-		if err == nil && unlockErr != nil {
-			err = unlockErr
-		}
-	}()
-
-	_, err = conn.Exec(context.Background(), "create table if not exists urls("+
-		"created_by varchar(36) not null, "+
-		"original_url varchar unique not null, "+
-		"id varchar(12) unique not null, "+
-		"correlation_id varchar"+
-		");")
+func runMigrations(dsn string) error {
+	m, err := migrate.New("file://migrations/", dsn)
 	if err != nil {
 		return err
 	}
 
+	err = m.Up()
+	if errors.Is(err, migrate.ErrNoChange) {
+		fmt.Println("Nothing to migrate")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Migrated successfully")
 	return nil
 }
 
@@ -131,14 +127,4 @@ func (repo *PgRepository) Close() error {
 
 func (repo *PgRepository) Check() error {
 	return repo.conn.Ping(context.Background())
-}
-
-func acquireAdvisoryLock(ctx context.Context, conn *pgx.Conn) error {
-	_, err := conn.Exec(ctx, "select pg_advisory_lock($1)", lockNum)
-	return err
-}
-
-func releaseAdvisoryLock(ctx context.Context, conn *pgx.Conn) error {
-	_, err := conn.Exec(ctx, "select pg_advisory_unlock($1)", lockNum)
-	return err
 }
