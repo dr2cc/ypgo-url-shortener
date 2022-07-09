@@ -35,7 +35,7 @@ func NewPgRepository(dsn string) (*PgRepository, error) {
 }
 
 func runMigrations(dsn string) error {
-	m, err := migrate.New("file://migrations/", dsn)
+	m, err := migrate.New("file://internal/app/storage/migrations/", dsn)
 	if err != nil {
 		return err
 	}

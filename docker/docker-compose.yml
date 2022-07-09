@@ -7,7 +7,6 @@ services:
       context: ../
       dockerfile: docker/Dockerfile
     volumes:
-      - ../internal/app/storage/migrations:/usr/src/app/migrations
       - ./wait-for-it.sh:/usr/src/app/wait-for-it.sh
     environment:
       - DATABASE_DSN=postgres://postgres:postgres@db:5432/praktikum?sslmode=disable
