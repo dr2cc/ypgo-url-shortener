@@ -10,6 +10,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,20 +40,21 @@ func TestShortener_Expand(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rm := new(mocks.MockRepo)
-			rm.On("GetByID", "id").Return("url", nil)
-			rm.On("GetByID", "missing").Return("", errors.New(""))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			rg := new(mocks.MockRandom)
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().GetByID("id").Return(models.ShortURL{OriginalURL: "url", ID: "id"}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID("missing").Return(models.ShortURL{}, errors.New("")).AnyTimes()
 
-			service := New(
-				rm,
-				new(mocks.MockGen),
-				rg,
-				config.New(),
-			)
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+
+			service := New(mockRepo, mockGen, mockRandom, config.New())
 
 			got, err := service.Expand(tt.args.id)
 			if !tt.wantErr {
@@ -105,31 +107,27 @@ func TestShortener_Shorten(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rm := new(mocks.MockRepo)
-			rm.On("GetByID", "id").Return("url", nil)
-			rm.On("GetByID", "missing").Return("", errors.New(""))
-			rm.On("Save", models.ShortURL{
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().Save(models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
-			}).Return(nil)
-			rm.On("Save", models.ShortURL{
+			}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().Save(models.ShortURL{
 				OriginalURL: "fail",
 				ID:          "id",
-			}).Return(storage.ErrNotUnique)
+			}).Return(storage.ErrNotUnique).AnyTimes()
 
-			gm := new(mocks.MockGen)
-			gm.On("GenerateIDFromString", "url").Return("id", nil)
-			gm.On("GenerateIDFromString", "fail").Return("id", nil)
-			gm.On("GenerateIDFromString", "").Return("", errors.New(""))
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockGen.EXPECT().GenerateIDFromString("url").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("fail").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("").Return("", errors.New("")).AnyTimes()
 
-			rg := new(mocks.MockRandom)
+			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(
-				rm,
-				gm,
-				rg,
-				config.New(),
-			)
+			service := New(mockRepo, mockGen, mockRandom, config.New())
 
 			got, err := service.Shorten(tt.args.url, "")
 			if !tt.wantErr {
@@ -183,22 +181,27 @@ func TestShortener_ShortenBatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rm := new(mocks.MockRepo)
-			rm.On("SaveBatch", tt.args.batch).Return(nil)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			gm := new(mocks.MockGen)
-			gm.On("GenerateIDFromString", "origURL").Return("id", nil)
-			gm.On("GenerateIDFromString", "origURL2").Return("id2", nil)
-			gm.On("GenerateIDFromString", "errorURL").Return("", errors.New(""))
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().SaveBatch([]models.ShortURL{{OriginalURL: "errorURL", CorrelationID: "corID", ID: "id"}}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
+				{CorrelationID: "corID", OriginalURL: "origURL", ID: "id"},
+				{CorrelationID: "corID2", OriginalURL: "origURL2", ID: "id2"},
+			}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
+				{CorrelationID: "corID", OriginalURL: "errorURL", ID: "id"},
+			}).Return(errors.New("")).AnyTimes()
 
-			rg := new(mocks.MockRandom)
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockGen.EXPECT().GenerateIDFromString("origURL").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("origURL2").Return("id2", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("errorURL").Return("", errors.New("")).AnyTimes()
 
-			service := New(
-				rm,
-				gm,
-				rg,
-				config.New(),
-			)
+			mockRandom := mocks.NewMockGenerator(ctrl)
+
+			service := New(mockRepo, mockGen, mockRandom, config.New())
 
 			got, err := service.ShortenBatch(tt.args.batch, tt.args.userID)
 			if !tt.wantErr {
@@ -230,16 +233,15 @@ func TestShortener_GetShortURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rm := new(mocks.MockRepo)
-			gm := new(mocks.MockGen)
-			rg := new(mocks.MockRandom)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			service := New(
-				rm,
-				gm,
-				rg,
-				cfg,
-			)
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockRandom := mocks.NewMockGenerator(ctrl)
+
+			service := New(mockRepo, mockGen, mockRandom, config.New())
+
 			model := models.ShortURL{
 				ID: tt.fields.ID,
 			}

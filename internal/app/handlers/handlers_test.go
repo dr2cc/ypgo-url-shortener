@@ -19,6 +19,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -169,20 +170,23 @@ func TestHandler_Expand(t *testing.T) {
 			method:  http.MethodGet,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("GetByID", "id").Return("url", nil)
-			mockRepo.On("GetByID", "missing").Return("", nil)
-			mockRepo.On("GetByID", "error").Return("", errors.New("error text"))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			mockGen := new(mocks.MockGen)
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().GetByID("id").Return(models.ShortURL{OriginalURL: "url"}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID("missing").Return(models.ShortURL{}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID("error").Return(models.ShortURL{}, errors.New("error text")).AnyTimes()
+			mockGen := mocks.NewMockURLGenerator(ctrl)
 
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateNewUserId").Return("user id")
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
@@ -230,21 +234,25 @@ func TestHandler_UserURLs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("GetUsersUrls", "user id with urls").Return("url", "id")
-			mockRepo.On("GetUsersUrls", "user id without urls").Return("", "")
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			mockGen := new(mocks.MockGen)
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateRandomBytes", 12).Return()
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().GetUsersUrls("user id with urls").Return([]models.ShortURL{{OriginalURL: "url", ID: "id"}}, nil).AnyTimes()
+			mockRepo.EXPECT().GetUsersUrls("user id without urls").Return([]models.ShortURL{}, nil).AnyTimes()
+
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
-			cryptographer := crypto.GCMAESCryptographer{Key: cfg.EncryptionKey, Random: rg}
+			cryptographer := crypto.GCMAESCryptographer{Key: cfg.EncryptionKey, Random: mockRandom}
 			encryptedCookieValue, _ := cryptographer.Encrypt([]byte(tt.userID))
 			cookies := map[string]string{
 				UserIDCookieName: hex.EncodeToString(encryptedCookieValue),
@@ -321,31 +329,37 @@ func TestHandler_Shorten(t *testing.T) {
 			body:   "existingURL",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", models.ShortURL{
-				OriginalURL: "url",
-				ID:          "id",
-				CreatedByID: "user id",
-			}).Return(nil)
-			mockRepo.On("Save", models.ShortURL{
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().GetUsersUrls("user id").Return(nil, nil).AnyTimes()
+			mockRepo.EXPECT().Save(models.ShortURL{
 				OriginalURL: "existingURL",
 				ID:          "id",
 				CreatedByID: "user id",
-			}).Return(storage.ErrNotUnique)
-			mockGen := new(mocks.MockGen)
-			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
-			mockGen.On("GenerateIDFromString", "existingURL").Return("id", nil)
-			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
-			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
+			}).Return(storage.ErrNotUnique).AnyTimes()
+			mockRepo.EXPECT().Save(models.ShortURL{
+				OriginalURL: "url",
+				ID:          "id",
+				CreatedByID: "user id",
+			}).Return(nil).AnyTimes()
 
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateNewUserID").Return("user id")
-			rg.On("GenerateRandomBytes", 12).Return()
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockGen.EXPECT().GenerateIDFromString("url").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("existingURL").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("").Return("", errors.New("err")).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("error_on_shortening").Return("", errors.New("err")).AnyTimes()
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
+			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
@@ -447,29 +461,33 @@ func TestHandler_ShortenAPI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("Save", models.ShortURL{
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().Save(models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
 				CreatedByID: "user id",
-			}).Return(nil)
-			mockRepo.On("Save", models.ShortURL{
+			}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().Save(models.ShortURL{
 				OriginalURL: "existingURL",
 				ID:          "id",
 				CreatedByID: "user id",
-			}).Return(storage.ErrNotUnique)
-			mockGen := new(mocks.MockGen)
-			mockGen.On("GenerateIDFromString", "url").Return("id", nil)
-			mockGen.On("GenerateIDFromString", "").Return("", errors.New("err"))
-			mockGen.On("GenerateIDFromString", "existingURL").Return("id", nil)
-			mockGen.On("GenerateIDFromString", "error_on_shortening").Return("", errors.New("err"))
+			}).Return(storage.ErrNotUnique).AnyTimes()
 
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateNewUserID").Return("user id")
-			rg.On("GenerateRandomBytes", 12).Return()
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockGen.EXPECT().GenerateIDFromString("url").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("existingURL").Return("id", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("").Return("", errors.New("err")).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("error_on_shortening").Return("", errors.New("err")).AnyTimes()
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
+			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
@@ -547,8 +565,11 @@ func TestHandler_ShortenBatchAPI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockRepo.On("SaveBatch", []models.ShortURL{
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
 				{
 					OriginalURL:   "url1",
 					ID:            "id1",
@@ -561,17 +582,18 @@ func TestHandler_ShortenBatchAPI(t *testing.T) {
 					CreatedByID:   "user id",
 					CorrelationID: "corId2",
 				},
-			}).Return(nil)
-			mockGen := new(mocks.MockGen)
-			mockGen.On("GenerateIDFromString", "url1").Return("id1", nil)
-			mockGen.On("GenerateIDFromString", "url2").Return("id2", nil)
+			}).Return(nil).AnyTimes()
 
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateNewUserID").Return("user id")
-			rg.On("GenerateRandomBytes", 12).Return()
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockGen.EXPECT().GenerateIDFromString("url1").Return("id1", nil).AnyTimes()
+			mockGen.EXPECT().GenerateIDFromString("url2").Return("id2", nil).AnyTimes()
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
+			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
@@ -625,14 +647,18 @@ func TestHandler_getUserID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockRepo)
-			mockGen := new(mocks.MockGen)
-			rg := new(mocks.MockRandom)
-			rg.On("GenerateNewUserID").Return("new user id")
-			rg.On("GenerateRandomBytes", 12).Return()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			mockRandom.EXPECT().GenerateNewUserID().Return("new user id").AnyTimes()
+			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
-			service := services.New(mockRepo, mockGen, rg, cfg)
+			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 
 			ts := httptest.NewServer(r)

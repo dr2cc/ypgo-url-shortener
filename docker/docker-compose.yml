@@ -7,14 +7,14 @@ services:
       context: ../
       dockerfile: docker/Dockerfile
     volumes:
-      - ./wait-for-it.sh:/usr/src/app/wait-for-it.sh
+      - ../:/usr/src/app/
     environment:
       - DATABASE_DSN=postgres://postgres:postgres@db:5432/praktikum?sslmode=disable
     ports:
       - "8080:8080"
     depends_on:
       - db
-    command: sh -c './wait-for-it.sh -t 5 db:5432 -- app'
+    command: sh -c '/usr/src/app/docker/wait-for-it.sh -t 5 db:5432 -- app'
   db:
     image: postgres:alpine
     environment:
