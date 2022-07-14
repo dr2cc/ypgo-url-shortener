@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -347,6 +348,8 @@ func (h *Handler) DeleteUrls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserID(r)
+
+	fmt.Printf("recieved ids: %v\n", ids)
 
 	go h.service.DeleteUrls(ids, userID)
 
