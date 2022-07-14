@@ -225,6 +225,251 @@ func TestFileRepository_SaveBatch(t *testing.T) {
 	}
 }
 
+func TestFileRepository_DeleteUrls(t *testing.T) {
+	type fields struct {
+		storage []models.ShortURL
+	}
+	type args struct {
+		urls []models.ShortURL
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantSaved   []models.ShortURL
+		wantDeleted []models.ShortURL
+	}{
+		{
+			name: "it deletes urls correctly",
+			fields: struct{ storage []models.ShortURL }{storage: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			wantSaved: []models.ShortURL{
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			},
+			wantDeleted: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			},
+		},
+		{
+			name: "it deletes urls correctly when empty array is provided",
+			fields: struct{ storage []models.ShortURL }{storage: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args: args{urls: []models.ShortURL{}},
+			wantSaved: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			},
+			wantDeleted: []models.ShortURL{},
+		},
+		{
+			name: "it deletes urls correctly when provided more urls than exists",
+			fields: struct{ storage []models.ShortURL }{storage: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+				{
+					OriginalURL: "url4",
+					ID:          "id4",
+					CreatedByID: "user4",
+				},
+			}},
+			wantSaved: []models.ShortURL{},
+			wantDeleted: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			},
+		},
+		{
+			name: "it doesn't delete urls of wrong user",
+			fields: struct{ storage []models.ShortURL }{storage: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user",
+				},
+			}},
+			wantSaved: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			},
+			wantDeleted: []models.ShortURL{},
+		},
+	}
+
+	filename := "./test_delete.json"
+	repo, err := NewFileRepository(filename)
+	require.NoError(t, err)
+	defer func(repo *FileRepository) {
+		err := repo.Close()
+		require.NoError(t, err)
+	}(repo)
+	defer func(name string) {
+		err := os.Remove(name)
+		require.NoError(t, err)
+	}(filename)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err = repo.file.Truncate(0)
+			require.NoError(t, err)
+			_, err = repo.file.Seek(0, 0)
+			require.NoError(t, err)
+			err = repo.SaveBatch(tt.fields.storage)
+			require.NoError(t, err)
+
+			err = repo.DeleteUrls(tt.args.urls)
+			assert.NoError(t, err)
+
+			for _, url := range tt.wantDeleted {
+				deleted, err := repo.GetByID(url.ID)
+				assert.NoError(t, err)
+				assert.False(t, deleted.DeletedAt.IsZero())
+			}
+
+			for _, url := range tt.wantSaved {
+				foundURL, err := repo.GetByID(url.ID)
+				assert.NoError(t, err)
+				assert.True(t, foundURL.DeletedAt.IsZero())
+			}
+		})
+	}
+}
+
 func TestNewFileRepository(t *testing.T) {
 	t.Run("it creates file if t doesnt exists", func(t *testing.T) {
 		filename := "./not_existing_file.json"

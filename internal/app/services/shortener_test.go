@@ -212,6 +212,49 @@ func TestShortener_ShortenBatch(t *testing.T) {
 	}
 }
 
+func TestShortener_DeleteUrls(t *testing.T) {
+	type args struct {
+		urlsIDS []string
+		userID  string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantDeleted []models.ShortURL
+		wantErr     bool
+	}{
+		{
+			name: "it deletes correct urls",
+			args: args{
+				urlsIDS: []string{"id1", "id2"},
+				userID:  "userID",
+			},
+			wantDeleted: []models.ShortURL{
+				{ID: "id2", CreatedByID: "userID"},
+				{ID: "id1", CreatedByID: "userID"},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			mockRepo.EXPECT().DeleteUrls(tt.wantDeleted).Return(nil).AnyTimes()
+
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+
+			mockRandom := mocks.NewMockGenerator(ctrl)
+
+			service := New(mockRepo, mockGen, mockRandom, config.New())
+
+			service.DeleteUrls(tt.args.urlsIDS, tt.args.userID)
+		})
+	}
+}
+
 func TestShortener_GetShortURL(t *testing.T) {
 	type fields struct {
 		OriginalURL string

@@ -282,3 +282,167 @@ func TestInMemoryRepository_GetUsersUrls(t *testing.T) {
 		})
 	}
 }
+
+func TestInMemoryRepository_DeleteUrls(t *testing.T) {
+	type fields struct {
+		storage map[string]models.ShortURL
+	}
+	type args struct {
+		urls []models.ShortURL
+	}
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantNotDeleted []string
+		wantDeleted    []string
+	}{
+		{
+			name: "it deletes urls correctly",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				"id3": {
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			wantNotDeleted: []string{"id3"},
+			wantDeleted:    []string{"id", "id2"},
+		},
+		{
+			name: "it deletes urls correctly when empty array is provided",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				"id3": {
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args:           args{urls: []models.ShortURL{}},
+			wantNotDeleted: []string{"id", "id2", "id3"},
+			wantDeleted:    []string{},
+		},
+		{
+			name: "it deletes urls correctly when provided more urls than exists",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				"id3": {
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user3",
+				},
+				{
+					OriginalURL: "url4",
+					ID:          "id4",
+					CreatedByID: "user4",
+				},
+			}},
+			wantNotDeleted: []string{},
+			wantDeleted:    []string{"id", "id2", "id3"},
+		},
+		{
+			name: "it doesn't delete urls of wrong user",
+			fields: struct{ storage map[string]models.ShortURL }{storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+			}},
+			args: args{urls: []models.ShortURL{
+				{
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user2",
+				},
+				{
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user",
+				},
+			}},
+
+			wantNotDeleted: []string{"id", "id2"},
+			wantDeleted:    []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &InMemoryRepository{
+				storage: tt.fields.storage,
+			}
+			err := repo.DeleteUrls(tt.args.urls)
+			assert.NoError(t, err)
+
+			for _, id := range tt.wantDeleted {
+				assert.False(t, repo.storage[id].DeletedAt.IsZero())
+			}
+			for _, id := range tt.wantNotDeleted {
+				assert.True(t, repo.storage[id].DeletedAt.IsZero())
+			}
+		})
+	}
+}

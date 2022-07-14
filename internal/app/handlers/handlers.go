@@ -36,6 +36,7 @@ func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 	r.Post("/api/shorten/batch", h.ShortenBatchAPI)
 	r.Get("/api/user/urls", h.UserURLs)
 	r.Get("/ping", h.Ping)
+	r.Delete("/api/user/urls", h.DeleteUrls)
 
 	return r
 }
@@ -170,6 +171,10 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	if shortURL.OriginalURL == "" {
 		http.Error(w, "cant find full url", http.StatusNotFound)
 		return
+	}
+
+	if !shortURL.DeletedAt.IsZero() {
+		http.Error(w, "url is deleted", http.StatusGone)
 	}
 
 	w.Header().Set("Content-Type", "text/html")
@@ -324,4 +329,25 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 	if _, err = w.Write(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (h *Handler) DeleteUrls(w http.ResponseWriter, r *http.Request) {
+	var ids []string
+
+	reader, err := getDecompressedReader(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(reader).Decode(&ids); err != nil {
+		http.Error(w, "cannot decode json", http.StatusBadRequest)
+		return
+	}
+
+	userID := h.getUserID(r)
+
+	go h.service.DeleteUrls(ids, userID)
+
+	w.WriteHeader(http.StatusAccepted)
 }

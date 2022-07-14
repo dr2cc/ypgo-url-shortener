@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
@@ -83,5 +84,21 @@ func (repo *InMemoryRepository) Close() error {
 }
 
 func (repo *InMemoryRepository) Check() error {
+	return nil
+}
+
+func (repo *InMemoryRepository) DeleteUrls(urls []models.ShortURL) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	now := time.Now()
+	for _, urlToDelete := range urls {
+		foundURL, ok := repo.storage[urlToDelete.ID]
+		if ok && foundURL.CreatedByID == urlToDelete.CreatedByID {
+			foundURL.DeletedAt = now
+			repo.storage[urlToDelete.ID] = foundURL
+		}
+	}
+
 	return nil
 }

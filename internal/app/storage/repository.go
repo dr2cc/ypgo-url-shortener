@@ -34,6 +34,7 @@ type Repository interface {
 	Close() error
 	Check() error
 	SaveBatch(batch []models.ShortURL) error
+	DeleteUrls(urls []models.ShortURL) error
 }
 
 func GetRepo(cfg *config.Config) Repository {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
@@ -120,8 +121,8 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 }
 
 func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
-	repo.mutex.Lock()
-	defer repo.mutex.Unlock()
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
 
 	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
 		return nil, err
@@ -152,4 +153,81 @@ func (repo *FileRepository) Close() error {
 func (repo *FileRepository) Check() error {
 	_, err := repo.file.Stat()
 	return err
+}
+
+func (repo *FileRepository) DeleteUrls(urls []models.ShortURL) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	existingURLs, err := repo.readFileToMap()
+	if err != nil {
+		return err
+	}
+
+	// mark deleted urls in memory
+	now := time.Now()
+	for _, urlToDelete := range urls {
+		foundURL, ok := existingURLs[urlToDelete.ID]
+		if ok && foundURL.CreatedByID == urlToDelete.CreatedByID {
+			foundURL.DeletedAt = now
+			existingURLs[urlToDelete.ID] = foundURL
+		}
+	}
+
+	// write back in memory map to file
+	err = repo.writeMapToFile(existingURLs)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *FileRepository) readFileToMap() (map[string]models.ShortURL, error) {
+	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+	var entry models.ShortURL
+	existingURLs := make(map[string]models.ShortURL)
+
+	scanner := bufio.NewScanner(repo.file)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry); err != nil {
+			return nil, err
+		}
+		existingURLs[entry.ID] = entry
+	}
+	return existingURLs, nil
+}
+
+func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortURL) error {
+	if err := repo.file.Truncate(0); err != nil {
+		return err
+	}
+	if _, err := repo.file.Seek(0, 0); err != nil {
+		return err
+	}
+
+	for _, url := range existingURLs {
+
+		data, err := json.Marshal(url)
+		if err != nil {
+			return err
+		}
+
+		if _, err := repo.writer.Write(data); err != nil {
+			return err
+		}
+
+		if err := repo.writer.WriteByte('\n'); err != nil {
+			return err
+		}
+
+	}
+	if err := repo.writer.Flush(); err != nil {
+		return err
+	}
+	return nil
 }

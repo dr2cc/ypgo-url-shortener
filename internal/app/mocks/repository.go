@@ -62,6 +62,20 @@ func (mr *MockRepositoryMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockRepository)(nil).Close))
 }
 
+// DeleteUrls mocks base method.
+func (m *MockRepository) DeleteUrls(arg0 []models.ShortURL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUrls", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUrls indicates an expected call of DeleteUrls.
+func (mr *MockRepositoryMockRecorder) DeleteUrls(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUrls", reflect.TypeOf((*MockRepository)(nil).DeleteUrls), arg0)
+}
+
 // GetByID mocks base method.
 func (m *MockRepository) GetByID(arg0 string) (models.ShortURL, error) {
 	m.ctrl.T.Helper()

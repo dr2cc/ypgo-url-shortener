@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -127,4 +128,27 @@ func (repo *PgRepository) Close() error {
 
 func (repo *PgRepository) Check() error {
 	return repo.conn.Ping(context.Background())
+}
+
+func (repo *PgRepository) DeleteUrls(urls []models.ShortURL) error {
+	if len(urls) == 0 {
+		return nil
+	}
+	deletedAt := time.Now()
+	urlIds := make([]string, len(urls))
+	userId := urls[0].CreatedByID
+
+	for i, url := range urls {
+		urlIds[i] = url.ID
+	}
+
+	_, err := repo.conn.Exec(
+		context.Background(),
+		"update urls set deleted_at = $1 where created_by = $2 and id = any($3)",
+		deletedAt,
+		userId,
+		urlIds,
+	)
+
+	return err
 }

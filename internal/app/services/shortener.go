@@ -3,6 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
+	"log"
+	"runtime"
+	"sync"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
@@ -115,4 +118,74 @@ func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) (
 
 func (service *Shortener) GenerateNewUserID() string {
 	return service.Random.GenerateNewUserID()
+}
+
+func (service *Shortener) DeleteUrls(ids []string, userID string) {
+	// implementing fan-in pattern for learning purposes
+	workersCount := runtime.NumCPU()
+	inputCh := make(chan string)
+	modelsToDelete := make([]models.ShortURL, 0, len(ids))
+
+	go func() {
+		for _, id := range ids {
+			inputCh <- id
+		}
+
+		close(inputCh)
+	}()
+
+	workerChs := make([]chan models.ShortURL, 0, workersCount)
+	for urlID := range inputCh {
+		workerCh := make(chan models.ShortURL)
+		newWorker(urlID, userID, workerCh)
+		workerChs = append(workerChs, workerCh)
+	}
+
+	for v := range fanIn(workerChs...) {
+		modelsToDelete = append(modelsToDelete, v)
+	}
+
+	err := service.repository.DeleteUrls(modelsToDelete)
+	if err != nil {
+		fmt.Printf("couldn't delete urls: %v\n", err)
+	}
+}
+
+func newWorker(urlID string, userID string, out chan models.ShortURL) {
+	go func() {
+		defer func() {
+			if x := recover(); x != nil {
+				newWorker(urlID, userID, out)
+				log.Printf("run time panic: %v", x)
+			}
+		}()
+
+		out <- models.ShortURL{ID: urlID, CreatedByID: userID}
+
+		close(out)
+	}()
+}
+
+func fanIn(inputChs ...chan models.ShortURL) chan models.ShortURL {
+	outCh := make(chan models.ShortURL)
+
+	go func() {
+		wg := &sync.WaitGroup{}
+
+		for _, inputCh := range inputChs {
+			wg.Add(1)
+
+			go func(inputCh chan models.ShortURL) {
+				defer wg.Done()
+				for item := range inputCh {
+					outCh <- item
+				}
+			}(inputCh)
+		}
+
+		wg.Wait()
+		close(outCh)
+	}()
+
+	return outCh
 }
