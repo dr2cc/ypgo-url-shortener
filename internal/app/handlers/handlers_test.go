@@ -746,6 +746,7 @@ func TestHandler_DeleteUrls(t *testing.T) {
 
 			mockRepo := mocks.NewMockRepository(ctrl)
 			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{ID: "id2", CreatedByID: "new user id"}, {ID: "id1", CreatedByID: "new user id"}}).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{ID: "id1", CreatedByID: "new user id"}, {ID: "id2", CreatedByID: "new user id"}}).AnyTimes()
 			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{CreatedByID: "new user id"}, {CreatedByID: "new user id"}}).AnyTimes()
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 

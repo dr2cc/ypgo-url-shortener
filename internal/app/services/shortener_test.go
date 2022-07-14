@@ -242,7 +242,14 @@ func TestShortener_DeleteUrls(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().DeleteUrls(tt.wantDeleted).Return(nil).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{
+				{ID: "id2", CreatedByID: "userID"},
+				{ID: "id1", CreatedByID: "userID"},
+			}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{
+				{ID: "id1", CreatedByID: "userID"},
+				{ID: "id2", CreatedByID: "userID"},
+			}).Return(nil).AnyTimes()
 
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 

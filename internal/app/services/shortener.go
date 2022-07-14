@@ -122,6 +122,9 @@ func (service *Shortener) GenerateNewUserID() string {
 
 func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	// implementing fan-in pattern for learning purposes
+	done := make(chan interface{})
+	defer close(done)
+
 	workersCount := runtime.NumCPU()
 	inputCh := make(chan string)
 	modelsToDelete := make([]models.ShortURL, 0, len(ids))
@@ -137,11 +140,11 @@ func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	workerChs := make([]chan models.ShortURL, 0, workersCount)
 	for urlID := range inputCh {
 		workerCh := make(chan models.ShortURL)
-		newWorker(urlID, userID, workerCh)
+		newWorker(done, urlID, userID, workerCh)
 		workerChs = append(workerChs, workerCh)
 	}
 
-	for v := range fanIn(workerChs...) {
+	for v := range fanIn(done, workerChs...) {
 		modelsToDelete = append(modelsToDelete, v)
 	}
 
@@ -151,41 +154,51 @@ func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	}
 }
 
-func newWorker(urlID string, userID string, out chan models.ShortURL) {
+func newWorker(done <-chan interface{}, urlID string, userID string, out chan models.ShortURL) {
 	go func() {
 		defer func() {
 			if x := recover(); x != nil {
-				newWorker(urlID, userID, out)
+				newWorker(done, urlID, userID, out)
 				log.Printf("run time panic: %v", x)
 			}
 		}()
 
-		out <- models.ShortURL{ID: urlID, CreatedByID: userID}
-
-		close(out)
+		for {
+			select {
+			case <-done:
+				close(out)
+				return
+			case out <- models.ShortURL{ID: urlID, CreatedByID: userID}:
+				close(out)
+			}
+		}
 	}()
 }
 
-func fanIn(inputChs ...chan models.ShortURL) chan models.ShortURL {
-	outCh := make(chan models.ShortURL)
+func fanIn(done <-chan interface{}, channels ...chan models.ShortURL) chan models.ShortURL {
+	var wg sync.WaitGroup
+	multiplexedStream := make(chan models.ShortURL)
+
+	multiplex := func(c <-chan models.ShortURL) {
+		defer wg.Done()
+		for v := range c {
+			select {
+			case <-done:
+				return
+			case multiplexedStream <- v:
+			}
+		}
+	}
+
+	wg.Add(len(channels))
+	for _, c := range channels {
+		go multiplex(c)
+	}
 
 	go func() {
-		wg := &sync.WaitGroup{}
-
-		for _, inputCh := range inputChs {
-			wg.Add(1)
-
-			go func(inputCh chan models.ShortURL) {
-				defer wg.Done()
-				for item := range inputCh {
-					outCh <- item
-				}
-			}(inputCh)
-		}
-
 		wg.Wait()
-		close(outCh)
+		close(multiplexedStream)
 	}()
 
-	return outCh
+	return multiplexedStream
 }
