@@ -140,7 +140,7 @@ func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	workerChs := make([]chan models.ShortURL, 0, workersCount)
 	for urlID := range inputCh {
 		workerCh := make(chan models.ShortURL)
-		newWorker(done, urlID, userID, workerCh)
+		newWorker(urlID, userID, workerCh)
 		workerChs = append(workerChs, workerCh)
 	}
 
@@ -154,24 +154,17 @@ func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	}
 }
 
-func newWorker(done <-chan interface{}, urlID string, userID string, out chan models.ShortURL) {
+func newWorker(urlID string, userID string, out chan models.ShortURL) {
 	go func() {
 		defer func() {
 			if x := recover(); x != nil {
-				newWorker(done, urlID, userID, out)
-				log.Printf("run time panic: %v", x)
+				newWorker(urlID, userID, out)
+				log.Printf("run time panic: %v, %v", x, out)
 			}
 		}()
 
-		for {
-			select {
-			case <-done:
-				close(out)
-				return
-			case out <- models.ShortURL{ID: urlID, CreatedByID: userID}:
-				close(out)
-			}
-		}
+		out <- models.ShortURL{ID: urlID, CreatedByID: userID}
+		close(out)
 	}()
 }
 

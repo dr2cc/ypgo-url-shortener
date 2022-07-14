@@ -11,11 +11,12 @@ import (
 const KeySize = 2 * aes.BlockSize //nolint:gomnd
 
 type Config struct {
-	BaseURL       string
-	ServerAddress string
-	FilePath      string
-	EncryptionKey []byte
-	DatabaseDSN   string
+	BaseURL        string
+	ServerAddress  string
+	FilePath       string
+	EncryptionKey  []byte
+	DatabaseDSN    string
+	MigrationsPath string
 }
 
 func New() *Config {
@@ -25,11 +26,12 @@ func New() *Config {
 	}
 
 	return &Config{
-		BaseURL:       "http://localhost:8080",
-		ServerAddress: ":8080",
-		FilePath:      "",
-		EncryptionKey: key,
-		DatabaseDSN:   "",
+		BaseURL:        "http://localhost:8080",
+		ServerAddress:  ":8080",
+		FilePath:       "",
+		EncryptionKey:  key,
+		DatabaseDSN:    "",
+		MigrationsPath: getEnv("MIGRATIONS_PATH", "file://internal/app/storage/migrations/"),
 	}
 }
 

@@ -21,13 +21,13 @@ type PgRepository struct {
 	conn *pgx.Conn
 }
 
-func NewPgRepository(dsn string) (*PgRepository, error) {
+func NewPgRepository(dsn string, migrationsPath string) (*PgRepository, error) {
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = runMigrations(dsn); err != nil {
+	if err = runMigrations(dsn, migrationsPath); err != nil {
 		return nil, err
 	}
 	return &PgRepository{
@@ -36,8 +36,8 @@ func NewPgRepository(dsn string) (*PgRepository, error) {
 	}, nil
 }
 
-func runMigrations(dsn string) error {
-	m, err := migrate.New("file://internal/app/storage/migrations/", dsn)
+func runMigrations(dsn string, migrationsPath string) error {
+	m, err := migrate.New(migrationsPath, dsn)
 	if err != nil {
 		return err
 	}
@@ -58,10 +58,12 @@ func runMigrations(dsn string) error {
 func (repo *PgRepository) Save(shortURL models.ShortURL) error {
 	_, err := repo.conn.Exec(
 		context.Background(),
-		"insert into urls (original_url, id, created_by) values ($1, $2, $3)",
+		"insert into urls (original_url, id, created_by, correlation_id, deleted_at) values ($1, $2, $3, $4, $5)",
 		shortURL.OriginalURL,
 		shortURL.ID,
 		shortURL.CreatedByID,
+		shortURL.CorrelationID,
+		shortURL.DeletedAt,
 	)
 
 	var pgErr *pgconn.PgError
@@ -77,9 +79,9 @@ func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
 	_, err := repo.conn.CopyFrom(
 		context.Background(),
 		pgx.Identifier{"urls"},
-		[]string{"original_url", "id", "created_by", "correlation_id"},
+		[]string{"original_url", "id", "created_by", "correlation_id", "deleted_at"},
 		pgx.CopyFromSlice(len(batch), func(i int) ([]interface{}, error) {
-			return []interface{}{batch[i].OriginalURL, batch[i].ID, batch[i].CreatedByID, batch[i].CorrelationID}, nil
+			return []interface{}{batch[i].OriginalURL, batch[i].ID, batch[i].CreatedByID, batch[i].CorrelationID, batch[i].DeletedAt}, nil
 		}),
 	)
 	return err
@@ -104,7 +106,7 @@ func (repo *PgRepository) GetUsersUrls(userID string) ([]models.ShortURL, error)
 
 	rows, err := repo.conn.Query(
 		context.Background(),
-		"select original_url, id, created_by from urls where created_by=$1",
+		"select original_url, id, created_by, correlation_id, deleted_at from urls where created_by=$1",
 		userID)
 	if err != nil {
 		return nil, err
@@ -113,11 +115,15 @@ func (repo *PgRepository) GetUsersUrls(userID string) ([]models.ShortURL, error)
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry models.ShortURL
-		if err = rows.Scan(&entry); err != nil {
+		model := models.ShortURL{}
+		var deletedAt pgtype.Timestamp
+		var correlationID pgtype.Text
+		if err = rows.Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &correlationID, &deletedAt); err != nil {
 			return nil, err
 		}
-		URLs = append(URLs, entry)
+		model.DeletedAt = deletedAt.Time
+		model.CorrelationID = correlationID.String
+		URLs = append(URLs, model)
 	}
 
 	if rows.Err() != nil {
@@ -140,20 +146,23 @@ func (repo *PgRepository) DeleteUrls(urls []models.ShortURL) error {
 		return nil
 	}
 	deletedAt := time.Now()
-	urlIDs := make([]string, len(urls))
-	userID := urls[0].CreatedByID
+	urlsToDelete := make(map[string][]string)
 
-	for i, url := range urls {
-		urlIDs[i] = url.ID
+	for _, url := range urls {
+		urlsToDelete[url.CreatedByID] = append(urlsToDelete[url.CreatedByID], url.ID)
 	}
 
-	_, err := repo.conn.Exec(
-		context.Background(),
-		"update urls set deleted_at = $1 where created_by = $2 and id = any($3)",
-		deletedAt,
-		userID,
-		urlIDs,
-	)
+	for userID, urlIDs := range urlsToDelete {
+		if _, err := repo.conn.Exec(
+			context.Background(),
+			"update urls set deleted_at = $1 where created_by = $2 and id = any($3)",
+			deletedAt,
+			userID,
+			urlIDs,
+		); err != nil {
+			return err
+		}
+	}
 
-	return err
+	return nil
 }

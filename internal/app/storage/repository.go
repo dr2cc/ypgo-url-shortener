@@ -39,7 +39,7 @@ type Repository interface {
 
 func GetRepo(cfg *config.Config) Repository {
 	if cfg.DatabaseDSN != "" {
-		repo, err := NewPgRepository(cfg.DatabaseDSN)
+		repo, err := NewPgRepository(cfg.DatabaseDSN, cfg.MigrationsPath)
 		if err != nil {
 			panic(err)
 		}
