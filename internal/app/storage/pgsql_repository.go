@@ -12,6 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -86,11 +87,13 @@ func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
 
 func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 	var model models.ShortURL
+	var deletedAt pgtype.Timestamp
 	err := repo.conn.QueryRow(
 		context.Background(),
 		"select original_url, id, created_by, correlation_id, deleted_at from urls where id=$1",
 		id,
-	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID, &model.DeletedAt)
+	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID, &deletedAt)
+	model.DeletedAt = deletedAt.Time
 	return model, err
 }
 
