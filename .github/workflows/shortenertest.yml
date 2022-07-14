@@ -56,7 +56,9 @@ jobs:
       - name: "Code increment #2"
         if: always()
         run: |
-          shortenertest -test.v -test.run=^TestIteration2$ -source-path=.
+          shortenertest -test.v -test.run=^TestIteration2$ \
+              -source-path=. \
+              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
 
       - name: "Code increment #3"
         if: always()
