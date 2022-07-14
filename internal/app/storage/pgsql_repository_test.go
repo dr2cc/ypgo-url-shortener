@@ -22,7 +22,11 @@ type PgRepositoryTestSuite struct {
 }
 
 func (s *PgRepositoryTestSuite) SetupSuite() {
-	repo, err := NewPgRepository(os.Getenv("DATABASE_DSN"), "file://migrations/")
+	dsn := os.Getenv("DATABASE_DSN")
+	if dsn == "" {
+		dsn = "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
+	}
+	repo, err := NewPgRepository(dsn, "file://migrations/")
 	require.NoError(s.T(), err)
 	s.repo = repo
 }
