@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ type PgRepositoryTestSuite struct {
 }
 
 func (s *PgRepositoryTestSuite) SetupSuite() {
-	repo, err := NewPgRepository("postgres://postgres:postgres@db:5432/praktikum?sslmode=disable", "file://migrations/")
+	repo, err := NewPgRepository(os.Getenv("DATABASE_DSN"), "file://migrations/")
 	require.NoError(s.T(), err)
 	s.repo = repo
 }
