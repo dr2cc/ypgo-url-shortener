@@ -175,6 +175,7 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 
 	if !shortURL.DeletedAt.IsZero() {
 		http.Error(w, "url is deleted", http.StatusGone)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
