@@ -135,19 +135,19 @@ func (repo *PgRepository) DeleteUrls(urls []models.ShortURL) error {
 		return nil
 	}
 	deletedAt := time.Now()
-	urlIds := make([]string, len(urls))
-	userId := urls[0].CreatedByID
+	urlIDs := make([]string, len(urls))
+	userID := urls[0].CreatedByID
 
 	for i, url := range urls {
-		urlIds[i] = url.ID
+		urlIDs[i] = url.ID
 	}
 
 	_, err := repo.conn.Exec(
 		context.Background(),
 		"update urls set deleted_at = $1 where created_by = $2 and id = any($3)",
 		deletedAt,
-		userId,
-		urlIds,
+		userID,
+		urlIDs,
 	)
 
 	return err
