@@ -88,12 +88,14 @@ func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
 func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 	var model models.ShortURL
 	var deletedAt pgtype.Timestamp
+	var correlationID pgtype.Text
 	err := repo.conn.QueryRow(
 		context.Background(),
 		"select original_url, id, created_by, correlation_id, deleted_at from urls where id=$1",
 		id,
-	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID, &deletedAt)
+	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &correlationID, &deletedAt)
 	model.DeletedAt = deletedAt.Time
+	model.CorrelationID = correlationID.String
 	return model, err
 }
 
