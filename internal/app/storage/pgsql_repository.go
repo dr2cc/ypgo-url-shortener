@@ -88,9 +88,9 @@ func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 	var model models.ShortURL
 	err := repo.conn.QueryRow(
 		context.Background(),
-		"select original_url, id, created_by, correlation_id from urls where id=$1",
+		"select original_url, id, created_by, correlation_id, deleted_at from urls where id=$1",
 		id,
-	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID)
+	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &model.CorrelationID, &model.DeletedAt)
 	return model, err
 }
 
