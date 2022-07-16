@@ -122,7 +122,7 @@ func (service *Shortener) GenerateNewUserID() string {
 
 func (service *Shortener) DeleteUrls(ids []string, userID string) {
 	// implementing fan-in pattern for learning purposes
-	done := make(chan interface{})
+	done := make(chan struct{})
 	defer close(done)
 
 	workersCount := runtime.NumCPU()
@@ -168,7 +168,7 @@ func newWorker(urlID string, userID string, out chan models.ShortURL) {
 	}()
 }
 
-func fanIn(done <-chan interface{}, channels ...chan models.ShortURL) chan models.ShortURL {
+func fanIn(done <-chan struct{}, channels ...chan models.ShortURL) chan models.ShortURL {
 	var wg sync.WaitGroup
 	multiplexedStream := make(chan models.ShortURL)
 
