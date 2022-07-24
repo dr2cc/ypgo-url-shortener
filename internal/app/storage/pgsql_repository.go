@@ -55,9 +55,9 @@ func runMigrations(dsn string, migrationsPath string) error {
 	return nil
 }
 
-func (repo *PgRepository) Save(shortURL models.ShortURL) error {
+func (repo *PgRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
 	_, err := repo.conn.Exec(
-		context.Background(),
+		ctx,
 		"insert into urls (original_url, id, created_by, correlation_id, deleted_at) values ($1, $2, $3, $4, $5)",
 		shortURL.OriginalURL,
 		shortURL.ID,
@@ -75,9 +75,9 @@ func (repo *PgRepository) Save(shortURL models.ShortURL) error {
 	return err
 }
 
-func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
+func (repo *PgRepository) SaveBatch(ctx context.Context, batch []models.ShortURL) error {
 	_, err := repo.conn.CopyFrom(
-		context.Background(),
+		ctx,
 		pgx.Identifier{"urls"},
 		[]string{"original_url", "id", "created_by", "correlation_id", "deleted_at"},
 		pgx.CopyFromSlice(len(batch), func(i int) ([]interface{}, error) {
@@ -87,12 +87,12 @@ func (repo *PgRepository) SaveBatch(batch []models.ShortURL) error {
 	return err
 }
 
-func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
+func (repo *PgRepository) GetByID(ctx context.Context, id string) (models.ShortURL, error) {
 	var model models.ShortURL
 	var deletedAt pgtype.Timestamp
 	var correlationID pgtype.Text
 	err := repo.conn.QueryRow(
-		context.Background(),
+		ctx,
 		"select original_url, id, created_by, correlation_id, deleted_at from urls where id=$1",
 		id,
 	).Scan(&model.OriginalURL, &model.ID, &model.CreatedByID, &correlationID, &deletedAt)
@@ -101,11 +101,11 @@ func (repo *PgRepository) GetByID(id string) (models.ShortURL, error) {
 	return model, err
 }
 
-func (repo *PgRepository) GetUsersUrls(userID string) ([]models.ShortURL, error) {
+func (repo *PgRepository) GetUsersUrls(ctx context.Context, userID string) ([]models.ShortURL, error) {
 	var URLs []models.ShortURL
 
 	rows, err := repo.conn.Query(
-		context.Background(),
+		ctx,
 		"select original_url, id, created_by, correlation_id, deleted_at from urls where created_by=$1",
 		userID)
 	if err != nil {
@@ -133,15 +133,15 @@ func (repo *PgRepository) GetUsersUrls(userID string) ([]models.ShortURL, error)
 	return URLs, nil
 }
 
-func (repo *PgRepository) Close() error {
-	return repo.conn.Close(context.Background())
+func (repo *PgRepository) Close(ctx context.Context) error {
+	return repo.conn.Close(ctx)
 }
 
-func (repo *PgRepository) Check() error {
-	return repo.conn.Ping(context.Background())
+func (repo *PgRepository) Check(ctx context.Context) error {
+	return repo.conn.Ping(ctx)
 }
 
-func (repo *PgRepository) DeleteUrls(urls []models.ShortURL) error {
+func (repo *PgRepository) DeleteUrls(ctx context.Context, urls []models.ShortURL) error {
 	if len(urls) == 0 {
 		return nil
 	}
@@ -154,7 +154,7 @@ func (repo *PgRepository) DeleteUrls(urls []models.ShortURL) error {
 
 	for userID, urlIDs := range urlsToDelete {
 		if _, err := repo.conn.Exec(
-			context.Background(),
+			ctx,
 			"update urls set deleted_at = $1 where created_by = $2 and id = any($3)",
 			deletedAt,
 			userID,

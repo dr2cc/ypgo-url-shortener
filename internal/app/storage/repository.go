@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
@@ -28,13 +30,13 @@ func NewNotUniqueURLError(shortURL models.ShortURL, err error) error {
 var ErrNotUnique = func() error { return &NotUniqueURLError{} }()
 
 type Repository interface {
-	Save(shortURL models.ShortURL) error
-	GetByID(id string) (models.ShortURL, error)
-	GetUsersUrls(id string) ([]models.ShortURL, error)
-	Close() error
-	Check() error
-	SaveBatch(batch []models.ShortURL) error
-	DeleteUrls(urls []models.ShortURL) error
+	Save(ctx context.Context, shortURL models.ShortURL) error
+	GetByID(ctx context.Context, id string) (models.ShortURL, error)
+	GetUsersUrls(ctx context.Context, id string) ([]models.ShortURL, error)
+	Close(_ context.Context) error
+	Check(ctx context.Context) error
+	SaveBatch(ctx context.Context, batch []models.ShortURL) error
+	DeleteUrls(ctx context.Context, urls []models.ShortURL) error
 }
 
 func GetRepo(cfg *config.Config) Repository {

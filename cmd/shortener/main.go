@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
@@ -19,7 +20,7 @@ func main() {
 
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
-	defer repo.Close()
+	defer repo.Close(context.Background())
 	random := &random.TrulyRandomGenerator{}
 	service := services.New(repo, gen, random, cfg)
 	srv := server.New(cfg, service)

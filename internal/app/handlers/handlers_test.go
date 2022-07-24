@@ -188,10 +188,10 @@ func TestHandler_Expand(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().GetByID("id").Return(models.ShortURL{OriginalURL: "url"}, nil).AnyTimes()
-			mockRepo.EXPECT().GetByID("missing").Return(models.ShortURL{}, nil).AnyTimes()
-			mockRepo.EXPECT().GetByID("error").Return(models.ShortURL{}, errors.New("error text")).AnyTimes()
-			mockRepo.EXPECT().GetByID("deleted").Return(models.ShortURL{
+			mockRepo.EXPECT().GetByID(gomock.Any(), "id").Return(models.ShortURL{OriginalURL: "url"}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID(gomock.Any(), "missing").Return(models.ShortURL{}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID(gomock.Any(), "error").Return(models.ShortURL{}, errors.New("error text")).AnyTimes()
+			mockRepo.EXPECT().GetByID(gomock.Any(), "deleted").Return(models.ShortURL{
 				OriginalURL: "url",
 				ID:          "deleted",
 				CreatedByID: "user id",
@@ -255,8 +255,8 @@ func TestHandler_UserURLs(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().GetUsersUrls("user id with urls").Return([]models.ShortURL{{OriginalURL: "url", ID: "id"}}, nil).AnyTimes()
-			mockRepo.EXPECT().GetUsersUrls("user id without urls").Return([]models.ShortURL{}, nil).AnyTimes()
+			mockRepo.EXPECT().GetUsersUrls(gomock.Any(), "user id with urls").Return([]models.ShortURL{{OriginalURL: "url", ID: "id"}}, nil).AnyTimes()
+			mockRepo.EXPECT().GetUsersUrls(gomock.Any(), "user id without urls").Return([]models.ShortURL{}, nil).AnyTimes()
 
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 
@@ -353,13 +353,13 @@ func TestHandler_Shorten(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().GetUsersUrls("user id").Return(nil, nil).AnyTimes()
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().GetUsersUrls(gomock.Any(), "user id").Return(nil, nil).AnyTimes()
+			mockRepo.EXPECT().Save(gomock.Any(), models.ShortURL{
 				OriginalURL: "existingURL",
 				ID:          "id",
 				CreatedByID: "user id",
 			}).Return(storage.ErrNotUnique).AnyTimes()
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().Save(gomock.Any(), models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
 				CreatedByID: "user id",
@@ -482,12 +482,12 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().Save(gomock.Any(), models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
 				CreatedByID: "user id",
 			}).Return(nil).AnyTimes()
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().Save(gomock.Any(), models.ShortURL{
 				OriginalURL: "existingURL",
 				ID:          "id",
 				CreatedByID: "user id",
@@ -586,7 +586,7 @@ func TestHandler_ShortenBatchAPI(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
+			mockRepo.EXPECT().SaveBatch(gomock.Any(), []models.ShortURL{
 				{
 					OriginalURL:   "url1",
 					ID:            "id1",
@@ -745,9 +745,9 @@ func TestHandler_DeleteUrls(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{ID: "id2", CreatedByID: "new user id"}, {ID: "id1", CreatedByID: "new user id"}}).AnyTimes()
-			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{ID: "id1", CreatedByID: "new user id"}, {ID: "id2", CreatedByID: "new user id"}}).AnyTimes()
-			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{{CreatedByID: "new user id"}, {CreatedByID: "new user id"}}).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls(gomock.Any(), []models.ShortURL{{ID: "id2", CreatedByID: "new user id"}, {ID: "id1", CreatedByID: "new user id"}}).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls(gomock.Any(), []models.ShortURL{{ID: "id1", CreatedByID: "new user id"}, {ID: "id2", CreatedByID: "new user id"}}).AnyTimes()
+			mockRepo.EXPECT().DeleteUrls(gomock.Any(), []models.ShortURL{{CreatedByID: "new user id"}, {CreatedByID: "new user id"}}).AnyTimes()
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 
 			mockRandom := mocks.NewMockGenerator(ctrl)

@@ -3,6 +3,7 @@ package storage
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -32,9 +33,9 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 	}, nil
 }
 
-func (repo *FileRepository) SaveBatch(batch []models.ShortURL) error {
+func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortURL) error {
 	for _, shortURL := range batch {
-		_, err := repo.GetByID(shortURL.ID)
+		_, err := repo.GetByID(ctx, shortURL.ID)
 		if err == nil {
 			return NewNotUniqueURLError(shortURL, nil)
 		}
@@ -66,8 +67,8 @@ func (repo *FileRepository) SaveBatch(batch []models.ShortURL) error {
 	return nil
 }
 
-func (repo *FileRepository) Save(shortURL models.ShortURL) error {
-	_, err := repo.GetByID(shortURL.ID)
+func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
+	_, err := repo.GetByID(ctx, shortURL.ID)
 	if err == nil {
 		return NewNotUniqueURLError(shortURL, nil)
 	}
@@ -95,7 +96,7 @@ func (repo *FileRepository) Save(shortURL models.ShortURL) error {
 	return nil
 }
 
-func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
+func (repo *FileRepository) GetByID(_ context.Context, id string) (models.ShortURL, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -120,7 +121,7 @@ func (repo *FileRepository) GetByID(id string) (models.ShortURL, error) {
 	return models.ShortURL{}, errors.New("can't find full url by id")
 }
 
-func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
+func (repo *FileRepository) GetUsersUrls(_ context.Context, id string) ([]models.ShortURL, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -146,16 +147,16 @@ func (repo *FileRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
 	return URLs, nil
 }
 
-func (repo *FileRepository) Close() error {
+func (repo *FileRepository) Close(_ context.Context) error {
 	return repo.file.Close()
 }
 
-func (repo *FileRepository) Check() error {
+func (repo *FileRepository) Check(_ context.Context) error {
 	_, err := repo.file.Stat()
 	return err
 }
 
-func (repo *FileRepository) DeleteUrls(urls []models.ShortURL) error {
+func (repo *FileRepository) DeleteUrls(_ context.Context, urls []models.ShortURL) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

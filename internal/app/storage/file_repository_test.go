@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestFileRepository_GetByID(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.Close()
+		err := repo.Close(context.Background())
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -48,7 +49,7 @@ func TestFileRepository_GetByID(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save(models.ShortURL{
+	err = repo.Save(context.Background(), models.ShortURL{
 		OriginalURL: "url",
 		ID:          "id",
 	})
@@ -56,7 +57,7 @@ func TestFileRepository_GetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetByID(tt.args.id)
+			got, err := repo.GetByID(context.Background(), tt.args.id)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			} else {
@@ -104,7 +105,7 @@ func TestFileRepository_Save(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.Close()
+		err := repo.Close(context.Background())
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -112,7 +113,7 @@ func TestFileRepository_Save(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save(models.ShortURL{
+	err = repo.Save(context.Background(), models.ShortURL{
 		OriginalURL: "existing url",
 		ID:          "existing id",
 		CreatedByID: "",
@@ -121,13 +122,13 @@ func TestFileRepository_Save(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repo.Save(tt.arg)
+			err := repo.Save(context.Background(), tt.arg)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			savedURL, err := repo.GetByID(tt.arg.ID)
+			savedURL, err := repo.GetByID(context.Background(), tt.arg.ID)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantSaved, savedURL)
 		})
@@ -195,7 +196,7 @@ func TestFileRepository_SaveBatch(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.Close()
+		err := repo.Close(context.Background())
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -203,7 +204,7 @@ func TestFileRepository_SaveBatch(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save(models.ShortURL{
+	err = repo.Save(context.Background(), models.ShortURL{
 		OriginalURL: "existing url",
 		ID:          "existing id",
 		CreatedByID: "user existed",
@@ -212,13 +213,13 @@ func TestFileRepository_SaveBatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repo.SaveBatch(tt.arg)
+			err := repo.SaveBatch(context.Background(), tt.arg)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			savedURLs, err := repo.GetUsersUrls(tt.userID)
+			savedURLs, err := repo.GetUsersUrls(context.Background(), tt.userID)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantSaved, savedURLs)
 		})
@@ -435,7 +436,7 @@ func TestFileRepository_DeleteUrls(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.Close()
+		err := repo.Close(context.Background())
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -449,20 +450,20 @@ func TestFileRepository_DeleteUrls(t *testing.T) {
 			require.NoError(t, err)
 			_, err = repo.file.Seek(0, 0)
 			require.NoError(t, err)
-			err = repo.SaveBatch(tt.fields.storage)
+			err = repo.SaveBatch(context.Background(), tt.fields.storage)
 			require.NoError(t, err)
 
-			err = repo.DeleteUrls(tt.args.urls)
+			err = repo.DeleteUrls(context.Background(), tt.args.urls)
 			assert.NoError(t, err)
 
 			for _, url := range tt.wantDeleted {
-				deleted, err := repo.GetByID(url.ID)
+				deleted, err := repo.GetByID(context.Background(), url.ID)
 				assert.NoError(t, err)
 				assert.False(t, deleted.DeletedAt.IsZero())
 			}
 
 			for _, url := range tt.wantSaved {
-				foundURL, err := repo.GetByID(url.ID)
+				foundURL, err := repo.GetByID(context.Background(), url.ID)
 				assert.NoError(t, err)
 				assert.True(t, foundURL.DeletedAt.IsZero())
 			}
@@ -483,7 +484,7 @@ func TestNewFileRepository(t *testing.T) {
 
 		repo, err := NewFileRepository(filename)
 		defer func(repo *FileRepository) {
-			err := repo.Close()
+			err := repo.Close(context.Background())
 			assert.NoError(t, err)
 		}(repo)
 
@@ -507,7 +508,7 @@ func TestNewFileRepository(t *testing.T) {
 		assert.NoError(t, err)
 
 		defer func(repo *FileRepository) {
-			err := repo.Close()
+			err := repo.Close(context.Background())
 			assert.NoError(t, err)
 		}(repo)
 		assert.NoError(t, err)
@@ -546,7 +547,7 @@ func TestFileRepository_GetUsersUrls(t *testing.T) {
 	repo, err := NewFileRepository(filename)
 	require.NoError(t, err)
 	defer func(repo *FileRepository) {
-		err := repo.Close()
+		err := repo.Close(context.Background())
 		require.NoError(t, err)
 	}(repo)
 	defer func(name string) {
@@ -554,14 +555,14 @@ func TestFileRepository_GetUsersUrls(t *testing.T) {
 		require.NoError(t, err)
 	}(filename)
 
-	err = repo.Save(models.ShortURL{
+	err = repo.Save(context.Background(), models.ShortURL{
 		OriginalURL: "url",
 		ID:          "id",
 		CreatedByID: "user id",
 	})
 	require.NoError(t, err)
 
-	err = repo.Save(models.ShortURL{
+	err = repo.Save(context.Background(), models.ShortURL{
 		OriginalURL: "url2",
 		ID:          "id2",
 		CreatedByID: "user2 id",
@@ -570,7 +571,7 @@ func TestFileRepository_GetUsersUrls(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetUsersUrls(tt.args.userID)
+			got, err := repo.GetUsersUrls(context.Background(), tt.args.userID)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})

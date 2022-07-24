@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -47,8 +48,8 @@ func TestShortener_Expand(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().GetByID("id").Return(models.ShortURL{OriginalURL: "url", ID: "id"}, nil).AnyTimes()
-			mockRepo.EXPECT().GetByID("missing").Return(models.ShortURL{}, errors.New("")).AnyTimes()
+			mockRepo.EXPECT().GetByID(context.Background(), "id").Return(models.ShortURL{OriginalURL: "url", ID: "id"}, nil).AnyTimes()
+			mockRepo.EXPECT().GetByID(context.Background(), "missing").Return(models.ShortURL{}, errors.New("")).AnyTimes()
 
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 
@@ -56,7 +57,7 @@ func TestShortener_Expand(t *testing.T) {
 
 			service := New(mockRepo, mockGen, mockRandom, config.New())
 
-			got, err := service.Expand(tt.args.id)
+			got, err := service.Expand(context.Background(), tt.args.id)
 			if !tt.wantErr {
 				assert.NoError(t, err)
 			}
@@ -111,11 +112,11 @@ func TestShortener_Shorten(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().Save(context.Background(), models.ShortURL{
 				OriginalURL: "url",
 				ID:          "id",
 			}).Return(nil).AnyTimes()
-			mockRepo.EXPECT().Save(models.ShortURL{
+			mockRepo.EXPECT().Save(context.Background(), models.ShortURL{
 				OriginalURL: "fail",
 				ID:          "id",
 			}).Return(storage.ErrNotUnique).AnyTimes()
@@ -129,7 +130,7 @@ func TestShortener_Shorten(t *testing.T) {
 
 			service := New(mockRepo, mockGen, mockRandom, config.New())
 
-			got, err := service.Shorten(tt.args.url, "")
+			got, err := service.Shorten(context.Background(), tt.args.url, "")
 			if !tt.wantErr {
 				assert.NoError(t, err)
 			} else {
@@ -185,12 +186,12 @@ func TestShortener_ShortenBatch(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().SaveBatch([]models.ShortURL{{OriginalURL: "errorURL", CorrelationID: "corID", ID: "id"}}).Return(nil).AnyTimes()
-			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
+			mockRepo.EXPECT().SaveBatch(context.Background(), []models.ShortURL{{OriginalURL: "errorURL", CorrelationID: "corID", ID: "id"}}).Return(nil).AnyTimes()
+			mockRepo.EXPECT().SaveBatch(context.Background(), []models.ShortURL{
 				{CorrelationID: "corID", OriginalURL: "origURL", ID: "id"},
 				{CorrelationID: "corID2", OriginalURL: "origURL2", ID: "id2"},
 			}).Return(nil).AnyTimes()
-			mockRepo.EXPECT().SaveBatch([]models.ShortURL{
+			mockRepo.EXPECT().SaveBatch(context.Background(), []models.ShortURL{
 				{CorrelationID: "corID", OriginalURL: "errorURL", ID: "id"},
 			}).Return(errors.New("")).AnyTimes()
 
@@ -203,7 +204,7 @@ func TestShortener_ShortenBatch(t *testing.T) {
 
 			service := New(mockRepo, mockGen, mockRandom, config.New())
 
-			got, err := service.ShortenBatch(tt.args.batch, tt.args.userID)
+			got, err := service.ShortenBatch(context.Background(), tt.args.batch, tt.args.userID)
 			if !tt.wantErr {
 				assert.NoError(t, err)
 			}
@@ -242,11 +243,11 @@ func TestShortener_DeleteUrls(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockRepo := mocks.NewMockRepository(ctrl)
-			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{
+			mockRepo.EXPECT().DeleteUrls(context.Background(), []models.ShortURL{
 				{ID: "id2", CreatedByID: "userID"},
 				{ID: "id1", CreatedByID: "userID"},
 			}).Return(nil).AnyTimes()
-			mockRepo.EXPECT().DeleteUrls([]models.ShortURL{
+			mockRepo.EXPECT().DeleteUrls(context.Background(), []models.ShortURL{
 				{ID: "id1", CreatedByID: "userID"},
 				{ID: "id2", CreatedByID: "userID"},
 			}).Return(nil).AnyTimes()
@@ -257,7 +258,7 @@ func TestShortener_DeleteUrls(t *testing.T) {
 
 			service := New(mockRepo, mockGen, mockRandom, config.New())
 
-			service.DeleteUrls(tt.args.urlsIDS, tt.args.userID)
+			service.DeleteUrls(context.Background(), tt.args.urlsIDS, tt.args.userID)
 		})
 	}
 }

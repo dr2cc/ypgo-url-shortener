@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ func NewInMemoryRepository() *InMemoryRepository {
 	}
 }
 
-func (repo *InMemoryRepository) SaveBatch(batch []models.ShortURL) error {
+func (repo *InMemoryRepository) SaveBatch(_ context.Context, batch []models.ShortURL) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
@@ -38,7 +39,7 @@ func (repo *InMemoryRepository) SaveBatch(batch []models.ShortURL) error {
 	return nil
 }
 
-func (repo *InMemoryRepository) Save(shortURL models.ShortURL) error {
+func (repo *InMemoryRepository) Save(_ context.Context, shortURL models.ShortURL) error {
 	repo.mutex.RLock()
 	_, ok := repo.storage[shortURL.ID]
 	repo.mutex.RUnlock()
@@ -54,7 +55,7 @@ func (repo *InMemoryRepository) Save(shortURL models.ShortURL) error {
 	return nil
 }
 
-func (repo *InMemoryRepository) GetByID(id string) (models.ShortURL, error) {
+func (repo *InMemoryRepository) GetByID(_ context.Context, id string) (models.ShortURL, error) {
 	repo.mutex.RLock()
 	url, ok := repo.storage[id]
 	repo.mutex.RUnlock()
@@ -66,7 +67,7 @@ func (repo *InMemoryRepository) GetByID(id string) (models.ShortURL, error) {
 	return url, nil
 }
 
-func (repo *InMemoryRepository) GetUsersUrls(id string) ([]models.ShortURL, error) {
+func (repo *InMemoryRepository) GetUsersUrls(_ context.Context, id string) ([]models.ShortURL, error) {
 	repo.mutex.RLock()
 	var URLs []models.ShortURL
 	for _, URL := range repo.storage {
@@ -78,16 +79,16 @@ func (repo *InMemoryRepository) GetUsersUrls(id string) ([]models.ShortURL, erro
 	return URLs, nil
 }
 
-func (repo *InMemoryRepository) Close() error {
+func (repo *InMemoryRepository) Close(_ context.Context) error {
 	repo.storage = make(map[string]models.ShortURL)
 	return nil
 }
 
-func (repo *InMemoryRepository) Check() error {
+func (repo *InMemoryRepository) Check(_ context.Context) error {
 	return nil
 }
 
-func (repo *InMemoryRepository) DeleteUrls(urls []models.ShortURL) error {
+func (repo *InMemoryRepository) DeleteUrls(_ context.Context, urls []models.ShortURL) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

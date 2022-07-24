@@ -1,11 +1,13 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
@@ -55,7 +57,7 @@ func New(
 	}
 }
 
-func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, error) {
+func (service *Shortener) Shorten(ctx context.Context, url string, userID string) (models.ShortURL, error) {
 	urlID, err := service.generator.GenerateIDFromString(url)
 	if err != nil {
 		return models.ShortURL{}, err
@@ -67,7 +69,7 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 		CreatedByID: userID,
 	}
 
-	err = service.repository.Save(shortURL)
+	err = service.repository.Save(ctx, shortURL)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		return shortURL, NewShorteningError(shortURL, err)
@@ -79,8 +81,8 @@ func (service *Shortener) Shorten(url string, userID string) (models.ShortURL, e
 	return shortURL, nil
 }
 
-func (service *Shortener) Expand(id string) (models.ShortURL, error) {
-	origURL, err := service.repository.GetByID(id)
+func (service *Shortener) Expand(ctx context.Context, id string) (models.ShortURL, error) {
+	origURL, err := service.repository.GetByID(ctx, id)
 	if err != nil {
 		return models.ShortURL{}, err
 	}
@@ -91,15 +93,18 @@ func (service *Shortener) FormatShortURL(urlID string) string {
 	return fmt.Sprintf("%s/%s", service.config.BaseURL, urlID)
 }
 
-func (service *Shortener) GetUrlsCreatedBy(userID string) ([]models.ShortURL, error) {
-	return service.repository.GetUsersUrls(userID)
+func (service *Shortener) GetUrlsCreatedBy(ctx context.Context, userID string) ([]models.ShortURL, error) {
+	return service.repository.GetUsersUrls(ctx, userID)
 }
 
-func (service *Shortener) HealthCheck() error {
-	return service.repository.Check()
+func (service *Shortener) HealthCheck(ctx context.Context) error {
+	timeout := 5 * time.Second //nolint:gomnd
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return service.repository.Check(ctx)
 }
 
-func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
+func (service *Shortener) ShortenBatch(ctx context.Context, batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
 	for i, URL := range batch {
 		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
 		if err != nil {
@@ -109,7 +114,7 @@ func (service *Shortener) ShortenBatch(batch []models.ShortURL, userID string) (
 		batch[i].CreatedByID = userID
 	}
 
-	if err := service.repository.SaveBatch(batch); err != nil {
+	if err := service.repository.SaveBatch(ctx, batch); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +125,7 @@ func (service *Shortener) GenerateNewUserID() string {
 	return service.Random.GenerateNewUserID()
 }
 
-func (service *Shortener) DeleteUrls(ids []string, userID string) {
+func (service *Shortener) DeleteUrls(ctx context.Context, ids []string, userID string) {
 	// implementing fan-in pattern for learning purposes
 	done := make(chan struct{})
 	defer close(done)
@@ -148,7 +153,7 @@ func (service *Shortener) DeleteUrls(ids []string, userID string) {
 		modelsToDelete = append(modelsToDelete, v)
 	}
 
-	err := service.repository.DeleteUrls(modelsToDelete)
+	err := service.repository.DeleteUrls(ctx, modelsToDelete)
 	if err != nil {
 		fmt.Printf("couldn't delete urls: %v\n", err)
 	}

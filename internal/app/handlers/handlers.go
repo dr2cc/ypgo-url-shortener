@@ -3,6 +3,7 @@ package handlers
 import (
 	"compress/flate"
 	"compress/gzip"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -76,7 +77,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	shortURL, err := h.service.Shorten(string(url), userID)
+	shortURL, err := h.service.Shorten(r.Context(), string(url), userID)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		writeShorteningResult(w, h, shortURL, http.StatusConflict)
@@ -124,7 +125,7 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	shortURL, err := h.service.Shorten(v.OriginalURL, userID)
+	shortURL, err := h.service.Shorten(r.Context(), v.OriginalURL, userID)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
 		writeShorteningAPIResult(w, h, shortURL, http.StatusConflict)
@@ -162,7 +163,7 @@ func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, shortURL models
 func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 	uID := chi.URLParam(r, "id")
 
-	shortURL, err := h.service.Expand(uID)
+	shortURL, err := h.service.Expand(r.Context(), uID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -186,7 +187,7 @@ func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 
-	URLs, err := h.service.GetUrlsCreatedBy(userID)
+	URLs, err := h.service.GetUrlsCreatedBy(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -262,7 +263,7 @@ func (h *Handler) getUserID(r *http.Request) string {
 }
 
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-	err := h.service.HealthCheck()
+	err := h.service.HealthCheck(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -301,7 +302,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	shortURLBatches, err := h.service.ShortenBatch(batch, userID)
+	shortURLBatches, err := h.service.ShortenBatch(r.Context(), batch, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -348,7 +349,7 @@ func (h *Handler) DeleteUrls(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	go h.service.DeleteUrls(ids, userID)
+	go h.service.DeleteUrls(context.Background(), ids, userID)
 
 	w.WriteHeader(http.StatusAccepted)
 }

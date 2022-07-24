@@ -47,10 +47,10 @@ func (s *PgRepositoryTestSuite) TestSave() {
 		ID:          "id",
 		CreatedByID: "user",
 	}
-	err := s.repo.Save(model)
+	err := s.repo.Save(context.Background(), model)
 	require.NoError(s.T(), err)
 
-	fetched, err := s.repo.GetByID(model.ID)
+	fetched, err := s.repo.GetByID(context.Background(), model.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), model, fetched)
 
@@ -60,10 +60,10 @@ func (s *PgRepositoryTestSuite) TestSave() {
 		CreatedByID: "user",
 		DeletedAt:   truncate(time.Now()).UTC(),
 	}
-	err = s.repo.Save(model)
+	err = s.repo.Save(context.Background(), model)
 	require.NoError(s.T(), err)
 
-	fetched, err = s.repo.GetByID(model.ID)
+	fetched, err = s.repo.GetByID(context.Background(), model.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), model, fetched)
 
@@ -73,10 +73,10 @@ func (s *PgRepositoryTestSuite) TestSave() {
 		CreatedByID:   "user",
 		CorrelationID: "cor id",
 	}
-	err = s.repo.Save(model)
+	err = s.repo.Save(context.Background(), model)
 	require.NoError(s.T(), err)
 
-	fetched, err = s.repo.GetByID(model.ID)
+	fetched, err = s.repo.GetByID(context.Background(), model.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), model, fetched)
 
@@ -87,10 +87,10 @@ func (s *PgRepositoryTestSuite) TestSave() {
 		CorrelationID: "cor id",
 		DeletedAt:     truncate(time.Now()).UTC(),
 	}
-	err = s.repo.Save(model)
+	err = s.repo.Save(context.Background(), model)
 	require.NoError(s.T(), err)
 
-	fetched, err = s.repo.GetByID(model.ID)
+	fetched, err = s.repo.GetByID(context.Background(), model.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), model, fetched)
 }
@@ -120,22 +120,22 @@ func (s *PgRepositoryTestSuite) TestSaveBatch() {
 		ID:          "id4",
 		CreatedByID: "user4",
 	}
-	err := s.repo.SaveBatch([]models.ShortURL{m1, m2, m3, m4})
+	err := s.repo.SaveBatch(context.Background(), []models.ShortURL{m1, m2, m3, m4})
 	require.NoError(s.T(), err)
 
-	fetched, err := s.repo.GetByID(m1.ID)
+	fetched, err := s.repo.GetByID(context.Background(), m1.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), m1, fetched)
 
-	fetched, err = s.repo.GetByID(m2.ID)
+	fetched, err = s.repo.GetByID(context.Background(), m2.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), m2, fetched)
 
-	fetched, err = s.repo.GetByID(m3.ID)
+	fetched, err = s.repo.GetByID(context.Background(), m3.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), m3, fetched)
 
-	fetched, err = s.repo.GetByID(m4.ID)
+	fetched, err = s.repo.GetByID(context.Background(), m4.ID)
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), m4, fetched)
 }
@@ -165,10 +165,10 @@ func (s *PgRepositoryTestSuite) TestGetUsersUrls() {
 		ID:          "id4",
 		CreatedByID: "user4",
 	}
-	err := s.repo.SaveBatch([]models.ShortURL{m1, m2, m3, m4})
+	err := s.repo.SaveBatch(context.Background(), []models.ShortURL{m1, m2, m3, m4})
 	require.NoError(s.T(), err)
 
-	fetched, err := s.repo.GetUsersUrls("user id")
+	fetched, err := s.repo.GetUsersUrls(context.Background(), "user id")
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), []models.ShortURL{m1, m2}, fetched)
 }
@@ -194,17 +194,17 @@ func (s *PgRepositoryTestSuite) TestDeleteUrls() {
 		ID:          "id4",
 		CreatedByID: "user4",
 	}
-	err := s.repo.SaveBatch([]models.ShortURL{m1, m2, m3, m4})
+	err := s.repo.SaveBatch(context.Background(), []models.ShortURL{m1, m2, m3, m4})
 	require.NoError(s.T(), err)
 
-	err = s.repo.DeleteUrls([]models.ShortURL{m1, m2})
+	err = s.repo.DeleteUrls(context.Background(), []models.ShortURL{m1, m2})
 	assert.NoError(s.T(), err)
 
-	fetched, err := s.repo.GetByID(m1.ID)
+	fetched, err := s.repo.GetByID(context.Background(), m1.ID)
 	assert.NoError(s.T(), err)
 	assert.False(s.T(), fetched.DeletedAt.IsZero())
 
-	fetched, err = s.repo.GetByID(m2.ID)
+	fetched, err = s.repo.GetByID(context.Background(), m2.ID)
 	assert.NoError(s.T(), err)
 	assert.False(s.T(), fetched.DeletedAt.IsZero())
 
@@ -213,23 +213,23 @@ func (s *PgRepositoryTestSuite) TestDeleteUrls() {
 		ID:          m3.ID,
 		CreatedByID: "another user",
 	}
-	err = s.repo.DeleteUrls([]models.ShortURL{modelWithWrongUserID})
+	err = s.repo.DeleteUrls(context.Background(), []models.ShortURL{modelWithWrongUserID})
 	assert.NoError(s.T(), err)
 
-	fetched, err = s.repo.GetByID(modelWithWrongUserID.ID)
+	fetched, err = s.repo.GetByID(context.Background(), modelWithWrongUserID.ID)
 	assert.NoError(s.T(), err)
 	assert.True(s.T(), fetched.DeletedAt.IsZero())
 
-	err = s.repo.DeleteUrls([]models.ShortURL{})
+	err = s.repo.DeleteUrls(context.Background(), []models.ShortURL{})
 	assert.NoError(s.T(), err)
 
-	fetched, err = s.repo.GetByID(m4.ID)
+	fetched, err = s.repo.GetByID(context.Background(), m4.ID)
 	assert.NoError(s.T(), err)
 	assert.True(s.T(), fetched.DeletedAt.IsZero())
 }
 
 func (s *PgRepositoryTestSuite) TestGetById() {
-	fetched, err := s.repo.GetByID("not existing")
+	fetched, err := s.repo.GetByID(context.Background(), "not existing")
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), models.ShortURL{}, fetched)
 }

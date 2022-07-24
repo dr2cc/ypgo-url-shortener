@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"testing"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
@@ -44,7 +45,7 @@ func TestInMemoryRepository_GetByID(t *testing.T) {
 					},
 				},
 			}
-			got, err := repo.GetByID(tt.args.id)
+			got, err := repo.GetByID(context.Background(), tt.args.id)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			} else {
@@ -114,7 +115,7 @@ func TestInMemoryRepository_Save(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			err := repo.Save(tt.arg)
+			err := repo.Save(context.Background(), tt.arg)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Equal(t, tt.arg.OriginalURL, repo.storage[tt.arg.ID].OriginalURL)
@@ -203,7 +204,7 @@ func TestInMemoryRepository_SaveBatch(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			err := repo.SaveBatch(tt.arg)
+			err := repo.SaveBatch(context.Background(), tt.arg)
 			if !tt.wantErr {
 				require.NoError(t, err)
 			}
@@ -276,7 +277,7 @@ func TestInMemoryRepository_GetUsersUrls(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			URLs, _ := repo.GetUsersUrls(tt.args.id)
+			URLs, _ := repo.GetUsersUrls(context.Background(), tt.args.id)
 			assert.Equal(t, tt.want, URLs)
 			assert.Equal(t, len(tt.want), len(URLs))
 		})
@@ -434,7 +435,7 @@ func TestInMemoryRepository_DeleteUrls(t *testing.T) {
 			repo := &InMemoryRepository{
 				storage: tt.fields.storage,
 			}
-			err := repo.DeleteUrls(tt.args.urls)
+			err := repo.DeleteUrls(context.Background(), tt.args.urls)
 			assert.NoError(t, err)
 
 			for _, id := range tt.wantDeleted {
