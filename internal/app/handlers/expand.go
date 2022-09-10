@@ -7,7 +7,7 @@ import (
 )
 
 func (h *Handler) Expand(w http.ResponseWriter, r *http.Request) {
-	uID := chi.URLParam(r, "id")
+	uID := chi.URLParam(r, "id") //nolint:contextcheck
 
 	shortURL, err := h.service.Expand(r.Context(), uID)
 	if err != nil {
