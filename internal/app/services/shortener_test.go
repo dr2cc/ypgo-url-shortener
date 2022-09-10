@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/mocks"
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -302,4 +305,36 @@ func TestShortener_GetShortURL(t *testing.T) {
 			assert.Equal(t, tt.want, shortURL)
 		})
 	}
+}
+
+func BenchmarkShortener(b *testing.B) {
+	const urlsToShortenCount = 10000
+
+	urlsToShorten := make([]string, 0)
+	for i := 0; i < urlsToShortenCount; i++ {
+		urlsToShorten = append(urlsToShorten, randStringBytes(i))
+	}
+
+	repo := storage.NewInMemoryRepository()
+	gen := generator.HashGenerator{}
+	trand := &random.TrulyRandomGenerator{}
+	service := New(repo, gen, trand, config.New())
+
+	b.ResetTimer()
+
+	b.Run("shorten", func(b *testing.B) {
+		for i := 0; i < urlsToShortenCount; i++ {
+			_, _ = service.Shorten(context.Background(), urlsToShorten[i], "")
+		}
+	})
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func randStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))] //nolint:gosec
+	}
+	return string(b)
 }
