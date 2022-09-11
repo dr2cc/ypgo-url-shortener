@@ -1,4 +1,4 @@
-name: autotests
+name: shortener integration
 
 on:
   pull_request:
