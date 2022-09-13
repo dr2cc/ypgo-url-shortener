@@ -32,9 +32,7 @@ jobs:
           cat $GITHUB_WORKSPACE/profile.cov_tmp | grep -v "mocks" | grep -v "_mock" > $GITHUB_WORKSPACE/profile.cov
         env:
           DATABASE_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      - name: install goveralls
-        run: GO111MODULE=off go get -u github.com/mattn/goveralls
-      - name: submit coverage
-        run: $(go env GOPATH)/bin/goveralls -service="github" -coverprofile=$GITHUB_WORKSPACE/profile.cov
-        env:
-          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+           path-to-profile: $GITHUB_WORKSPACE/profile.cov
