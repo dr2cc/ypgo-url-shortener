@@ -17,10 +17,11 @@ import (
 )
 
 type PgRepository struct {
-	Dsn  string
-	conn *pgx.Conn
+	Dsn  string    // data source name for the Postgres database. It's a string that contains the host, port, username, password, and database name
+	conn *pgx.Conn // connection to the database
 }
 
+// NewPgRepository creates a new Postgres connection, runs the migrations, and returns a new PgRepository.
 func NewPgRepository(dsn string, migrationsPath string) (*PgRepository, error) {
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
@@ -36,6 +37,7 @@ func NewPgRepository(dsn string, migrationsPath string) (*PgRepository, error) {
 	}, nil
 }
 
+// runMigrations runs migrations that hasn't been run.
 func runMigrations(dsn string, migrationsPath string) error {
 	m, err := migrate.New(migrationsPath, dsn)
 	if err != nil {
@@ -55,6 +57,7 @@ func runMigrations(dsn string, migrationsPath string) error {
 	return nil
 }
 
+// Save inserting a new row into the urls table.
 func (repo *PgRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
 	_, err := repo.conn.Exec(
 		ctx,
@@ -75,6 +78,7 @@ func (repo *PgRepository) Save(ctx context.Context, shortURL models.ShortURL) er
 	return err
 }
 
+// SaveBatch is a batch insert operation.
 func (repo *PgRepository) SaveBatch(ctx context.Context, batch []models.ShortURL) error {
 	_, err := repo.conn.CopyFrom(
 		ctx,
@@ -87,6 +91,7 @@ func (repo *PgRepository) SaveBatch(ctx context.Context, batch []models.ShortURL
 	return err
 }
 
+// GetByID gets url by id.
 func (repo *PgRepository) GetByID(ctx context.Context, id string) (models.ShortURL, error) {
 	var model models.ShortURL
 	var deletedAt pgtype.Timestamp
@@ -101,6 +106,7 @@ func (repo *PgRepository) GetByID(ctx context.Context, id string) (models.ShortU
 	return model, err
 }
 
+// GetUsersUrls returns all the urls created by a user.
 func (repo *PgRepository) GetUsersUrls(ctx context.Context, userID string) ([]models.ShortURL, error) {
 	var URLs []models.ShortURL
 
@@ -133,14 +139,17 @@ func (repo *PgRepository) GetUsersUrls(ctx context.Context, userID string) ([]mo
 	return URLs, nil
 }
 
+// Close closes the connection to the database.
 func (repo *PgRepository) Close(ctx context.Context) error {
 	return repo.conn.Close(ctx)
 }
 
+// Check checks if the database is up and running.
 func (repo *PgRepository) Check(ctx context.Context) error {
 	return repo.conn.Ping(ctx)
 }
 
+// DeleteUrls deletes all given urls.
 func (repo *PgRepository) DeleteUrls(ctx context.Context, urls []models.ShortURL) error {
 	if len(urls) == 0 {
 		return nil

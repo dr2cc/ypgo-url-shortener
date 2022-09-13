@@ -8,11 +8,17 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 )
 
+// GCMAESCryptographer is cryptographer based on AES with Galois/Counter Mode.
+//
+// AES with Galois/Counter Mode (AES-GCM) provides both authenticated encryption (confidentiality and authentication)
+// and the ability to check the integrity and authentication of additional
+// authenticated data (AAD) that is sent in the clear.
 type GCMAESCryptographer struct {
-	Key    []byte
-	Random random.Generator
+	Key    []byte           // key used to encrypt and decrypt the data
+	Random random.Generator // random number generator. It's used to generate the nonce
 }
 
+// Encrypt encrypts the plaintext using AES-GCM.
 func (c *GCMAESCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {
@@ -32,6 +38,7 @@ func (c *GCMAESCryptographer) Encrypt(plaintext []byte) ([]byte, error) {
 	return aesgcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
+// Decrypt decrypts the ciphertext using AES-GCM.
 func (c *GCMAESCryptographer) Decrypt(ciphertext []byte) ([]byte, error) {
 	aesblock, err := aes.NewCipher(c.Key)
 	if err != nil {

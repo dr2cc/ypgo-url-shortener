@@ -9,11 +9,13 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
+// InMemoryRepository is repository that uses memory for storage.
 type InMemoryRepository struct {
-	storage map[string]models.ShortURL
-	mutex   sync.RWMutex
+	storage map[string]models.ShortURL // map that will store urls
+	mutex   sync.RWMutex               // read-write mutex that will be used to synchronize access to the storage map
 }
 
+// NewInMemoryRepository creates a new InMemoryRepository and returns a pointer to it.
 func NewInMemoryRepository() *InMemoryRepository {
 	return &InMemoryRepository{
 		storage: make(map[string]models.ShortURL),
@@ -21,6 +23,8 @@ func NewInMemoryRepository() *InMemoryRepository {
 	}
 }
 
+// SaveBatch saves multiple urls.
+// Checks if the urls are unique and then saving them.
 func (repo *InMemoryRepository) SaveBatch(_ context.Context, batch []models.ShortURL) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
@@ -39,6 +43,7 @@ func (repo *InMemoryRepository) SaveBatch(_ context.Context, batch []models.Shor
 	return nil
 }
 
+// Save checks if the url is unique and then saving it to the memory.
 func (repo *InMemoryRepository) Save(_ context.Context, shortURL models.ShortURL) error {
 	repo.mutex.RLock()
 	_, ok := repo.storage[shortURL.ID]
@@ -55,6 +60,7 @@ func (repo *InMemoryRepository) Save(_ context.Context, shortURL models.ShortURL
 	return nil
 }
 
+// GetByID gets the url by id.
 func (repo *InMemoryRepository) GetByID(_ context.Context, id string) (models.ShortURL, error) {
 	repo.mutex.RLock()
 	url, ok := repo.storage[id]
@@ -67,11 +73,12 @@ func (repo *InMemoryRepository) GetByID(_ context.Context, id string) (models.Sh
 	return url, nil
 }
 
-func (repo *InMemoryRepository) GetUsersUrls(_ context.Context, id string) ([]models.ShortURL, error) {
+// GetUsersUrls gets all the urls that were created by the user with the given id.
+func (repo *InMemoryRepository) GetUsersUrls(_ context.Context, userID string) ([]models.ShortURL, error) {
 	repo.mutex.RLock()
 	var URLs []models.ShortURL
 	for _, URL := range repo.storage {
-		if URL.CreatedByID == id {
+		if URL.CreatedByID == userID {
 			URLs = append(URLs, URL)
 		}
 	}
@@ -79,15 +86,18 @@ func (repo *InMemoryRepository) GetUsersUrls(_ context.Context, id string) ([]mo
 	return URLs, nil
 }
 
+// Close clears map.
 func (repo *InMemoryRepository) Close(_ context.Context) error {
 	repo.storage = make(map[string]models.ShortURL)
 	return nil
 }
 
+// Check is just a stub.
 func (repo *InMemoryRepository) Check(_ context.Context) error {
 	return nil
 }
 
+// DeleteUrls deletes all given urls.
 func (repo *InMemoryRepository) DeleteUrls(_ context.Context, urls []models.ShortURL) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()

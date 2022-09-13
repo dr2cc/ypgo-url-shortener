@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,4 +54,15 @@ func Test_hashToBase62Generator_GenerateIDdFromString(t *testing.T) {
 			assert.Equal(t, got, tt.want)
 		})
 	}
+}
+
+func ExampleHashGenerator_GenerateIDFromString() {
+	hg := HashGenerator{}
+	url := "https://practicum.yandex.ru/"
+
+	id, _ := hg.GenerateIDFromString(url)
+	fmt.Println(id)
+
+	// Output:
+	// hWMghaHItOw
 }

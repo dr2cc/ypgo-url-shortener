@@ -1,3 +1,4 @@
+// Package services contains main business logic of application.
 package services
 
 import (
@@ -16,6 +17,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
 
+// shorteningError is error wrapper of any error occurred in service.
 type shorteningError struct {
 	Err      error
 	ShortURL models.ShortURL
@@ -29,6 +31,7 @@ func (err *shorteningError) Unwrap() error {
 	return err.Err
 }
 
+// NewShorteningError wraps error err with additional info about url.
 func NewShorteningError(shortURL models.ShortURL, err error) error {
 	return &shorteningError{
 		Err:      err,
@@ -36,6 +39,7 @@ func NewShorteningError(shortURL models.ShortURL, err error) error {
 	}
 }
 
+// Shortener is main service of application.
 type Shortener struct {
 	Random     random.Generator
 	repository storage.Repository
@@ -43,6 +47,7 @@ type Shortener struct {
 	config     *config.Config
 }
 
+// New creates new service.
 func New(
 	repository storage.Repository,
 	generator generator.URLGenerator,
@@ -57,6 +62,7 @@ func New(
 	}
 }
 
+// Shorten shortens full url and returns filled struct ShortURL.
 func (service *Shortener) Shorten(ctx context.Context, url string, userID string) (models.ShortURL, error) {
 	urlID, err := service.generator.GenerateIDFromString(url)
 	if err != nil {
@@ -81,6 +87,7 @@ func (service *Shortener) Shorten(ctx context.Context, url string, userID string
 	return shortURL, nil
 }
 
+// Expand expands full url from given id. Returns filled ShortURL struct.
 func (service *Shortener) Expand(ctx context.Context, id string) (models.ShortURL, error) {
 	origURL, err := service.repository.GetByID(ctx, id)
 	if err != nil {
@@ -89,14 +96,18 @@ func (service *Shortener) Expand(ctx context.Context, id string) (models.ShortUR
 	return origURL, nil
 }
 
+// FormatShortURL formats url id to full url.
 func (service *Shortener) FormatShortURL(urlID string) string {
 	return fmt.Sprintf("%s/%s", service.config.BaseURL, urlID)
 }
 
+// GetUrlsCreatedBy returns array of all urs that was shortened by given userID.
+// It's just a wrapper for repository.GetUsersUrls.
 func (service *Shortener) GetUrlsCreatedBy(ctx context.Context, userID string) ([]models.ShortURL, error) {
 	return service.repository.GetUsersUrls(ctx, userID)
 }
 
+// HealthCheck checks if service is working correctly
 func (service *Shortener) HealthCheck(ctx context.Context) error {
 	timeout := 5 * time.Second //nolint:gomnd
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -104,6 +115,8 @@ func (service *Shortener) HealthCheck(ctx context.Context) error {
 	return service.repository.Check(ctx)
 }
 
+// ShortenBatch shortens array of urls.
+// All entries of batch must contain OriginalURL.
 func (service *Shortener) ShortenBatch(ctx context.Context, batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
 	for i, URL := range batch {
 		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
@@ -121,12 +134,15 @@ func (service *Shortener) ShortenBatch(ctx context.Context, batch []models.Short
 	return batch, nil
 }
 
+// GenerateNewUserID generates new user id.
+// It's just a wrapper for random.GenerateNewUserID().
 func (service *Shortener) GenerateNewUserID() string {
 	return service.Random.GenerateNewUserID()
 }
 
+// DeleteUrls deletes all urls with given ids that was created by userID.
+// Implements fan-in and fan-out pattern for learning purposes.
 func (service *Shortener) DeleteUrls(ctx context.Context, ids []string, userID string) {
-	// implementing fan-in pattern for learning purposes
 	done := make(chan struct{})
 	defer close(done)
 

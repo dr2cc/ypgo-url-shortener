@@ -1,3 +1,4 @@
+// Package server is wrapper around built in http server.
 package server
 
 import (
@@ -11,10 +12,11 @@ import (
 )
 
 type Server struct {
-	config  *config.Config
-	service *services.Shortener
+	config  *config.Config      // configuration object that we'll use to configure our server
+	service *services.Shortener // service that will be used to shorten URLs
 }
 
+// Run starts http server.
 func (s *Server) Run() {
 	r := handlers.NewRouter(s.service, s.config)
 
@@ -26,6 +28,7 @@ func (s *Server) Run() {
 	log.Fatal(httpServer.ListenAndServe())
 }
 
+// New creates new http server.
 func New(config *config.Config, service *services.Shortener) *Server {
 	return &Server{
 		config:  config,

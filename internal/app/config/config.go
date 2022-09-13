@@ -1,3 +1,4 @@
+// Package config contains configuration for application.
 package config
 
 import (
@@ -11,14 +12,15 @@ import (
 const KeySize = 2 * aes.BlockSize //nolint:gomnd
 
 type Config struct {
-	BaseURL        string
-	ServerAddress  string
-	FilePath       string
-	EncryptionKey  []byte
-	DatabaseDSN    string
-	MigrationsPath string
+	BaseURL        string // base URL of the application
+	ServerAddress  string // address the server will listen on
+	FilePath       string // path to the file that will be used as storage
+	EncryptionKey  []byte // key used to encrypt and decrypt values
+	DatabaseDSN    string // DSN for the database
+	MigrationsPath string // path to the folder containing the migrations
 }
 
+// New creates new config with default values. It reads values from env and command line options.
 func New() *Config {
 	key := []byte(getEnv("ENCRYPTION_KEY", ""))
 	if len(key) == 0 {
@@ -35,6 +37,7 @@ func New() *Config {
 	}
 }
 
+// generateNewEncryptionKey generates a random key of the specified KeySize.
 func generateNewEncryptionKey() []byte {
 	randomGenerator := random.TrulyRandomGenerator{}
 	randomKey, err := randomGenerator.GenerateRandomBytes(KeySize)
@@ -51,6 +54,7 @@ func (c *Config) Init() {
 	flag.StringVar(&c.DatabaseDSN, "d", getEnv("DATABASE_DSN", ""), "database dsn for connecting to postgres")
 }
 
+// If the environment variable exists, return it, otherwise return the fallback value.
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value

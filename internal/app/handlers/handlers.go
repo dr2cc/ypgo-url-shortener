@@ -1,3 +1,4 @@
+// Package handlers contains functions that handles http requests
 package handlers
 
 import (
@@ -16,6 +17,7 @@ import (
 
 const UserIDCookieName = "shortener-user-id"
 
+// NewRouter creates a new router, adds some middleware, and then adds some routes
 func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 	r := chi.NewRouter()
 
@@ -37,11 +39,12 @@ func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 }
 
 type Handler struct {
-	Mux     *chi.Mux
-	service *services.Shortener
-	crypto  crypto.Cryptographer
+	Mux     *chi.Mux             // router that we'll be using to handle our requests
+	service *services.Shortener  // service that will contain main business logic
+	crypto  crypto.Cryptographer // interface that we'll use to encrypt and decrypt values
 }
 
+// NewHandler creates a new instance of the Handler struct, initializes the chi mux, and sets the service and crypto fields
 func NewHandler(service *services.Shortener, config *config.Config) *Handler {
 	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey, Random: service.Random}
 	return &Handler{
@@ -51,6 +54,7 @@ func NewHandler(service *services.Shortener, config *config.Config) *Handler {
 	}
 }
 
+// If the request body is gzipped, return a gzip reader, otherwise return the request body (default reader)
 func getDecompressedReader(r *http.Request) (io.Reader, error) {
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		return gzip.NewReader(r.Body)
@@ -58,6 +62,7 @@ func getDecompressedReader(r *http.Request) (io.Reader, error) {
 	return r.Body, nil
 }
 
+// addEncryptedUserIDToCookie encrypts the userID and setting it as a cookie.
 func (h *Handler) addEncryptedUserIDToCookie(w *http.ResponseWriter, userID string) error {
 	encryptedUserID, err := h.crypto.Encrypt([]byte(userID))
 	if err != nil {
@@ -76,6 +81,7 @@ func (h *Handler) addEncryptedUserIDToCookie(w *http.ResponseWriter, userID stri
 	return nil
 }
 
+// getUserID gets the userID from the cookie.
 func (h *Handler) getUserID(r *http.Request) string {
 	encodedCookie, err := r.Cookie(UserIDCookieName)
 	if err != nil {
@@ -95,6 +101,7 @@ func (h *Handler) getUserID(r *http.Request) string {
 	return string(decryptedUserID)
 }
 
+// Ping is a health check endpoint.
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	err := h.service.HealthCheck(r.Context())
 	if err != nil {
