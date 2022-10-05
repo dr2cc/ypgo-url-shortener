@@ -28,8 +28,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 		ast.Inspect(file, func(node ast.Node) bool {
 			mainDecl, isFuncDecl := node.(*ast.FuncDecl)
-			if !isFuncDecl || mainDecl.Name.Name != "main" {
+			if !isFuncDecl {
 				return true
+			}
+
+			if mainDecl.Name.Name != "main" {
+				return false
 			}
 
 			ast.Inspect(mainDecl, func(node ast.Node) bool {
@@ -47,10 +51,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					pass.Reportf(s.Pos(), "exit call in main function")
 				}
 
-				return true
+				return false
 			})
 
-			return true
+			return false
 		})
 	}
 
