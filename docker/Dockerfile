@@ -13,4 +13,4 @@ RUN go install golang.org/x/tools/cmd/godoc@latest
 RUN go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest
 
 COPY . .
-RUN go build -v -o /usr/local/bin/app ./cmd/shortener
+RUN go build -v -o /usr/local/bin/app -ldflags "-X main.buildVersion=$(git describe --tags) -X main.buildCommit=$(git rev-parse --verify HEAD) -X 'main.buildDate=$(date +'%Y/%m/%d')'" ./cmd/shortener
