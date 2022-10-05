@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	buildVersion = "N/A"
-	buildDate    = "N/A"
-	buildCommit  = "N/A"
+	buildVersion = "N/A" //nolint:gochecknoglobals
+	buildDate    = "N/A" //nolint:gochecknoglobals
+	buildCommit  = "N/A" //nolint:gochecknoglobals
 )
 
 func main() {
