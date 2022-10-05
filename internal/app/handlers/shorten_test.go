@@ -17,14 +17,14 @@ import (
 
 func TestHandler_Shorten(t *testing.T) {
 	type want struct {
-		statusCode int
 		body       string
+		statusCode int
 	}
 	tests := []struct {
 		name   string
-		want   want
 		body   string
 		method string
+		want   want
 	}{
 		{
 			name: "post with url",
@@ -127,15 +127,15 @@ func TestHandler_Shorten(t *testing.T) {
 
 func TestHandler_ShortenAPI(t *testing.T) {
 	type want struct {
-		statusCode  int
 		body        string
 		contentType string
+		statusCode  int
 	}
 	tests := []struct {
 		name   string
-		want   want
 		body   string
 		method string
+		want   want
 	}{
 		{
 			name: "post with url",

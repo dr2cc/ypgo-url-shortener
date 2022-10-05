@@ -74,11 +74,11 @@ func TestShortener_Shorten(t *testing.T) {
 		url string
 	}
 	tests := []struct {
+		expectedErr error
+		want        *models.ShortURL
 		name        string
 		args        args
-		want        *models.ShortURL
 		wantErr     bool
-		expectedErr error
 	}{
 		{
 			name: "generate short link from url",
@@ -149,8 +149,8 @@ func TestShortener_Shorten(t *testing.T) {
 
 func TestShortener_ShortenBatch(t *testing.T) {
 	type args struct {
-		batch  []models.ShortURL
 		userID string
+		batch  []models.ShortURL
 	}
 	tests := []struct {
 		name    string
@@ -218,8 +218,8 @@ func TestShortener_ShortenBatch(t *testing.T) {
 
 func TestShortener_DeleteUrls(t *testing.T) {
 	type args struct {
-		urlsIDS []string
 		userID  string
+		urlsIDS []string
 	}
 	tests := []struct {
 		name        string

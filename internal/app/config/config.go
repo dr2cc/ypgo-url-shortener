@@ -15,9 +15,9 @@ type Config struct {
 	BaseURL        string // base URL of the application
 	ServerAddress  string // address the server will listen on
 	FilePath       string // path to the file that will be used as storage
-	EncryptionKey  []byte // key used to encrypt and decrypt values
 	DatabaseDSN    string // DSN for the database
 	MigrationsPath string // path to the folder containing the migrations
+	EncryptionKey  []byte // key used to encrypt and decrypt values
 }
 
 // New creates new config with default values. It reads values from env and command line options.

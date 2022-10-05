@@ -17,8 +17,8 @@ import (
 )
 
 type PgRepository struct {
-	Dsn  string    // data source name for the Postgres database. It's a string that contains the host, port, username, password, and database name
 	conn *pgx.Conn // connection to the database
+	Dsn  string    // data source name for the Postgres database. It's a string that contains the host, port, username, password, and database name
 }
 
 // NewPgRepository creates a new Postgres connection, runs the migrations, and returns a new PgRepository.

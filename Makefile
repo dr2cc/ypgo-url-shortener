@@ -39,13 +39,20 @@ mock: ## Generate mocks
 lint:
 	$(docker_bin) run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run
 
+fieldaligment-fix:
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) fieldalignment -fix ./... || true
+
 gofumpt:
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) gofumpt -l -w .
 
 test: ## Execute tests
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go test -v ./...
 
-check: build gofumpt lint test  ## Run tests and code analysis
+check: build fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
+
+staticlint:
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go build -v -o /usr/src/app/cmd/staticlint/staticlint /usr/src/app/cmd/staticlint
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) /usr/src/app/cmd/staticlint/staticlint ./...
 
 # Prompt to continue
 prompt-continue:

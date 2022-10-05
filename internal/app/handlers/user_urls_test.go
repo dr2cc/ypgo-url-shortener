@@ -25,9 +25,9 @@ func TestHandler_UserURLs(t *testing.T) {
 	tests := []struct {
 		name    string
 		request string
-		want    want
 		userID  string
 		method  string
+		want    want
 	}{
 		{
 			name: "get user's urls",

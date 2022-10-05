@@ -155,9 +155,9 @@ func TestHandler_getUserID(t *testing.T) {
 			h := NewHandler(service, cfg)
 
 			if tt.cookieRawValue != "" {
-				encryptedCookieValue, err := h.crypto.Encrypt([]byte(tt.cookieRawValue))
+				encryptedCookieValue, errEncrypt := h.crypto.Encrypt([]byte(tt.cookieRawValue))
 				encodedCookieValue := hex.EncodeToString(encryptedCookieValue)
-				require.NoError(t, err)
+				require.NoError(t, errEncrypt)
 				req.AddCookie(&http.Cookie{
 					Name:     UserIDCookieName,
 					Value:    encodedCookieValue,

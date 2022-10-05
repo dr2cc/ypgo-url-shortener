@@ -21,7 +21,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewDecoder(reader).Decode(&input); err != nil {
+	if errDecode := json.NewDecoder(reader).Decode(&input); errDecode != nil {
 		http.Error(w, "cannot decode json", http.StatusBadRequest)
 		return
 	}

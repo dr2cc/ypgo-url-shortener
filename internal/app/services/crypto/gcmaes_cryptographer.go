@@ -14,8 +14,8 @@ import (
 // and the ability to check the integrity and authentication of additional
 // authenticated data (AAD) that is sent in the clear.
 type GCMAESCryptographer struct {
-	Key    []byte           // key used to encrypt and decrypt the data
 	Random random.Generator // random number generator. It's used to generate the nonce
+	Key    []byte           // key used to encrypt and decrypt the data
 }
 
 // Encrypt encrypts the plaintext using AES-GCM.

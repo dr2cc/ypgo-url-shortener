@@ -15,15 +15,15 @@ import (
 
 func TestHandler_ShortenBatchAPI(t *testing.T) {
 	type want struct {
-		statusCode  int
 		body        string
 		contentType string
+		statusCode  int
 	}
 	tests := []struct {
 		name   string
-		want   want
 		body   string
 		method string
+		want   want
 	}{
 		{
 			name: "post with url",

@@ -13,9 +13,9 @@ func TestGetRepo(t *testing.T) {
 		cfg *config.Config
 	}
 	tests := []struct {
-		name string
-		args args
 		want Repository
+		args args
+		name string
 	}{
 		{
 			name: "it returns file repository when file path is present",

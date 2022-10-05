@@ -16,9 +16,9 @@ import (
 
 // FileRepository is repository that uses files for storage.
 type FileRepository struct {
-	mutex  sync.RWMutex  // mutex that will be used to synchronize access to the file
 	file   *os.File      // file that we will be writing to
 	writer *bufio.Writer // buffered writer that will write to the file
+	mutex  sync.RWMutex  // mutex that will be used to synchronize access to the file
 }
 
 // NewFileRepository creates new file repository. Creates file at filePath if it doesn't exist.
@@ -56,11 +56,11 @@ func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortU
 			return err
 		}
 
-		if _, err := repo.writer.Write(data); err != nil {
-			return err
+		if _, errWrite := repo.writer.Write(data); errWrite != nil {
+			return errWrite
 		}
 
-		if err := repo.writer.WriteByte('\n'); err != nil {
+		if errWriteByte := repo.writer.WriteByte('\n'); errWriteByte != nil {
 			return err
 		}
 
@@ -87,16 +87,16 @@ func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) 
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	if _, err := repo.writer.Write(data); err != nil {
-		return err
+	if _, errWrite := repo.writer.Write(data); errWrite != nil {
+		return errWrite
 	}
 
-	if err := repo.writer.WriteByte('\n'); err != nil {
-		return err
+	if errWriteByte := repo.writer.WriteByte('\n'); errWriteByte != nil {
+		return errWriteByte
 	}
 
-	if err := repo.writer.Flush(); err != nil {
-		return err
+	if errFlush := repo.writer.Flush(); errFlush != nil {
+		return errFlush
 	}
 
 	return nil
@@ -232,12 +232,12 @@ func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortU
 			return err
 		}
 
-		if _, err := repo.writer.Write(data); err != nil {
-			return err
+		if _, errWrite := repo.writer.Write(data); errWrite != nil {
+			return errWrite
 		}
 
-		if err := repo.writer.WriteByte('\n'); err != nil {
-			return err
+		if errWriteByte := repo.writer.WriteByte('\n'); errWriteByte != nil {
+			return errWriteByte
 		}
 
 	}

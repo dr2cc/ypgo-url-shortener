@@ -17,15 +17,15 @@ import (
 
 func TestHandler_Expand(t *testing.T) {
 	type want struct {
-		statusCode int
 		location   string
 		body       string
+		statusCode int
 	}
 	tests := []struct {
 		name    string
 		request string
-		want    want
 		method  string
+		want    want
 	}{
 		{
 			name: "get with existing id",

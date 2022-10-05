@@ -61,11 +61,11 @@ func TestInMemoryRepository_Save(t *testing.T) {
 		storage map[string]models.ShortURL
 	}
 	tests := []struct {
-		name        string
 		fields      fields
-		arg         models.ShortURL
-		wantErr     bool
 		wantStorage map[string]models.ShortURL
+		arg         models.ShortURL
+		name        string
+		wantErr     bool
 	}{
 		{
 			name:   "save new url with id",
@@ -131,11 +131,11 @@ func TestInMemoryRepository_SaveBatch(t *testing.T) {
 		storage map[string]models.ShortURL
 	}
 	tests := []struct {
-		name        string
 		fields      fields
+		wantStorage map[string]models.ShortURL
+		name        string
 		arg         []models.ShortURL
 		wantErr     bool
-		wantStorage map[string]models.ShortURL
 	}{
 		{
 			name:   "save new url with id",
