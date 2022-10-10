@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//nolint:goconst
 func TestHandler_ShortenBatchAPI(t *testing.T) {
 	type want struct {
 		body        string
@@ -93,6 +94,8 @@ func TestHandler_ShortenBatchAPI(t *testing.T) {
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
+			cfg.BaseURL = "http://localhost:8080"
+
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)

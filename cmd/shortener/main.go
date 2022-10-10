@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 
@@ -27,15 +26,17 @@ func main() {
 
 	cfg := config.New()
 
-	cfg.Init()
-	flag.Parse()
+	err := cfg.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
 	defer func(ctx context.Context, repo storage.Repository) {
-		err := repo.Close(ctx)
-		if err != nil {
-			log.Fatal(err)
+		errClose := repo.Close(ctx)
+		if errClose != nil {
+			log.Fatal(errClose)
 		}
 	}(context.Background(), repo)
 

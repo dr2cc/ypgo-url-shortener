@@ -102,6 +102,8 @@ func TestHandler_Shorten(t *testing.T) {
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
+			cfg.BaseURL = "http://localhost:8080"
+
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
@@ -230,6 +232,8 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
 			cfg := config.New()
+			cfg.BaseURL = "http://localhost:8080"
+
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 			ts := httptest.NewServer(r)
