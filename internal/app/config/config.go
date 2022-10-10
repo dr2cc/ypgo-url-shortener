@@ -18,6 +18,7 @@ type Config struct {
 	DatabaseDSN    string // DSN for the database
 	MigrationsPath string // path to the folder containing the migrations
 	EncryptionKey  []byte // key used to encrypt and decrypt values
+	EnableHTTPS    bool
 }
 
 // New creates new config with default values. It reads values from env and command line options.
@@ -34,6 +35,7 @@ func New() *Config {
 		EncryptionKey:  key,
 		DatabaseDSN:    "",
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "file://internal/app/storage/migrations/"),
+		EnableHTTPS:    false,
 	}
 }
 
@@ -52,6 +54,7 @@ func (c *Config) Init() {
 	flag.StringVar(&c.BaseURL, "b", getEnv("BASE_URL", "http://localhost:8080"), "base url")
 	flag.StringVar(&c.FilePath, "f", getEnv("FILE_STORAGE_PATH", ""), "file storage path")
 	flag.StringVar(&c.DatabaseDSN, "d", getEnv("DATABASE_DSN", ""), "database dsn for connecting to postgres")
+	flag.BoolVar(&c.EnableHTTPS, "s", getEnv("ENABLE_HTTPS", "") == "true", "enable https")
 }
 
 // If the environment variable exists, return it, otherwise return the fallback value.
