@@ -2,7 +2,7 @@
 package server
 
 import (
-	"log"
+	"context"
 	"net/http"
 	"time"
 
@@ -16,8 +16,12 @@ type HTTP struct {
 }
 
 // Run starts http server.
-func (s *HTTP) Run() {
-	log.Fatal(s.server.ListenAndServe())
+func (s *HTTP) Run() error {
+	return s.server.ListenAndServe()
+}
+
+func (s *HTTP) Shutdown() error {
+	return s.server.Shutdown(context.Background())
 }
 
 func NewHTTP(config *config.Config, service *services.Shortener) (Server, error) {

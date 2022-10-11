@@ -7,7 +7,8 @@ import (
 )
 
 type Server interface {
-	Run()
+	Run() error
+	Shutdown() error
 }
 
 func New(config *config.Config, service *services.Shortener) (Server, error) {

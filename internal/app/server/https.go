@@ -3,6 +3,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -25,14 +26,18 @@ type HTTPS struct {
 	tlsConfig *tls.Config
 }
 
-func (s *HTTPS) Run() {
+func (s *HTTPS) Run() error {
 	conn, err := net.Listen("tcp", s.server.Addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	tlsListener := tls.NewListener(conn, s.tlsConfig)
-	log.Fatal(s.server.Serve(tlsListener))
+	return s.server.Serve(tlsListener)
+}
+
+func (s *HTTPS) Shutdown() error {
+	return s.server.Shutdown(context.Background())
 }
 
 func NewHTTPS(config *config.Config, service *services.Shortener) (Server, error) {

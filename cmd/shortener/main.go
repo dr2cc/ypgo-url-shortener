@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
 	"github.com/belamov/ypgo-url-shortener/internal/app/server"
@@ -46,7 +50,24 @@ func main() {
 	srv, err := server.New(cfg, service)
 	if err != nil {
 		log.Print(err)
-	} else {
-		srv.Run()
+		return
 	}
+
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1) //nolint:gomnd
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigint
+		if errShutdown := srv.Shutdown(); errShutdown != nil {
+			log.Printf("HTTP server Shutdown: %v", errShutdown)
+		}
+		close(idleConnsClosed)
+	}()
+
+	if errRun := srv.Run(); errRun != http.ErrServerClosed {
+		log.Printf("HTTP server ListenAndServe: %v", errRun)
+		return
+	}
+	<-idleConnsClosed
+	fmt.Println("Server Shutdown gracefully")
 }
