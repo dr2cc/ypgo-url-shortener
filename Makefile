@@ -37,6 +37,7 @@ mock: ## Generate mocks
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/random.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/random Generator
 
 lint:
+	docker pull golangci/golangci-lint:latest
 	$(docker_bin) run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run
 
 fieldaligment-fix:
@@ -48,7 +49,10 @@ gofumpt:
 test: ## Execute tests
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go test -v ./...
 
-check: build fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
+tidy: ## Execute tests
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go mod tidy
+
+check: build tidy fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
 
 staticlint:
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go build -v -o /usr/src/app/cmd/staticlint/staticlint /usr/src/app/cmd/staticlint
