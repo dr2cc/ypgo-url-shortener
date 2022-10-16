@@ -24,7 +24,7 @@ type Config struct {
 	EnableHTTPS    bool `json:"enable_https"`
 }
 
-// New creates new config with default values. It reads values from env and command line options.
+// New reads the configuration from the command line flags, environment variables and a configuration file (with priority).
 func New() (*Config, error) {
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) == 0 {
