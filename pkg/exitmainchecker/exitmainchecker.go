@@ -39,7 +39,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			ast.Inspect(mainDecl, func(node ast.Node) bool {
 				callExpr, isCallExpr := node.(*ast.CallExpr)
 				if !isCallExpr {
-					return true
+					return false
 				}
 
 				s, isSelectorExpr := callExpr.Fun.(*ast.SelectorExpr)
