@@ -39,7 +39,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			ast.Inspect(mainDecl, func(node ast.Node) bool {
 				callExpr, isCallExpr := node.(*ast.CallExpr)
 				if !isCallExpr {
-					return false
+					return true
 				}
 
 				s, isSelectorExpr := callExpr.Fun.(*ast.SelectorExpr)
@@ -48,7 +48,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				}
 
 				if s.Sel.Name == "Exit" {
-					pass.Reportf(s.Pos(), "exit call in main function")
+					ident := s.X.(*ast.Ident)
+					if ident.Name == "os" {
+						pass.Reportf(s.Pos(), "exit call in main function")
+					}
 				}
 
 				return false
