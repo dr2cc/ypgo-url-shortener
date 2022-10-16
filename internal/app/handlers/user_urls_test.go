@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/aes"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
@@ -62,8 +63,11 @@ func TestHandler_UserURLs(t *testing.T) {
 			mockRandom := mocks.NewMockGenerator(ctrl)
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
-			cfg := config.New()
-			cfg.BaseURL = "http://localhost:8080"
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+				EncryptionKey: make([]byte, 2*aes.BlockSize),
+			}
 
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)

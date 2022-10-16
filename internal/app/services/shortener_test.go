@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
+	"crypto/aes"
 	"errors"
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -58,7 +58,12 @@ func TestShortener_Expand(t *testing.T) {
 
 			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(mockRepo, mockGen, mockRandom, config.New())
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+			}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
 
 			got, err := service.Expand(context.Background(), tt.args.id)
 			if !tt.wantErr {
@@ -131,7 +136,12 @@ func TestShortener_Shorten(t *testing.T) {
 
 			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(mockRepo, mockGen, mockRandom, config.New())
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+			}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
 
 			got, err := service.Shorten(context.Background(), tt.args.url, "")
 			if !tt.wantErr {
@@ -205,7 +215,13 @@ func TestShortener_ShortenBatch(t *testing.T) {
 
 			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(mockRepo, mockGen, mockRandom, config.New())
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+				EncryptionKey: make([]byte, 2*aes.BlockSize),
+			}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
 
 			got, err := service.ShortenBatch(context.Background(), tt.args.batch, tt.args.userID)
 			if !tt.wantErr {
@@ -259,7 +275,13 @@ func TestShortener_DeleteUrls(t *testing.T) {
 
 			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(mockRepo, mockGen, mockRandom, config.New())
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+				EncryptionKey: make([]byte, 2*aes.BlockSize),
+			}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
 
 			service.DeleteUrls(context.Background(), tt.args.urlsIDS, tt.args.userID)
 		})
@@ -271,7 +293,6 @@ func TestShortener_GetShortURL(t *testing.T) {
 		OriginalURL string
 		ID          string
 	}
-	cfg := config.New()
 	tests := []struct {
 		name   string
 		fields fields
@@ -282,7 +303,7 @@ func TestShortener_GetShortURL(t *testing.T) {
 			fields: fields{
 				ID: "id",
 			},
-			want: fmt.Sprintf("%s/id", cfg.BaseURL),
+			want: "http://localhost:8080/id",
 		},
 	}
 	for _, tt := range tests {
@@ -294,7 +315,13 @@ func TestShortener_GetShortURL(t *testing.T) {
 			mockGen := mocks.NewMockURLGenerator(ctrl)
 			mockRandom := mocks.NewMockGenerator(ctrl)
 
-			service := New(mockRepo, mockGen, mockRandom, config.New())
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+				EncryptionKey: make([]byte, 2*aes.BlockSize),
+			}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
 
 			model := models.ShortURL{
 				ID: tt.fields.ID,
@@ -318,7 +345,14 @@ func BenchmarkShortener(b *testing.B) {
 	repo := storage.NewInMemoryRepository()
 	gen := generator.HashGenerator{}
 	trand := &random.TrulyRandomGenerator{}
-	service := New(repo, gen, trand, config.New())
+
+	cfg := &config.Config{
+		BaseURL:       "http://localhost:8080",
+		ServerAddress: ":8080",
+		EncryptionKey: make([]byte, 2*aes.BlockSize),
+	}
+
+	service := New(repo, gen, trand, cfg)
 
 	b.ResetTimer()
 

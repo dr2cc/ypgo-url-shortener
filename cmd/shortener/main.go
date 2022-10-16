@@ -28,9 +28,7 @@ func main() {
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
-	cfg := config.New()
-
-	err := cfg.Init()
+	cfg, err := config.New()
 	if err != nil {
 		log.Fatal(err)
 	}

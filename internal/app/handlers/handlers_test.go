@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/aes"
 	"encoding/hex"
 	"io"
 	"net/http"
@@ -139,7 +140,12 @@ func TestHandler_getUserID(t *testing.T) {
 			mockRandom.EXPECT().GenerateNewUserID().Return("new user id").AnyTimes()
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
-			cfg := config.New()
+			cfg := &config.Config{
+				BaseURL:       "http://localhost:8080",
+				ServerAddress: ":8080",
+				EncryptionKey: make([]byte, 2*aes.BlockSize),
+			}
+
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
 			r := NewRouter(service, cfg)
 

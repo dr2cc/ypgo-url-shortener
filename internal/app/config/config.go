@@ -25,13 +25,13 @@ type Config struct {
 }
 
 // New creates new config with default values. It reads values from env and command line options.
-func New() *Config {
-	key := []byte(getEnv("ENCRYPTION_KEY", ""))
+func New() (*Config, error) {
+	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) == 0 {
 		key = generateNewEncryptionKey()
 	}
 
-	return &Config{
+	cfg := &Config{
 		BaseURL:        "",
 		ServerAddress:  "",
 		FilePath:       "",
@@ -41,6 +41,28 @@ func New() *Config {
 		EnableHTTPS:    false,
 		ConfigPath:     "",
 	}
+
+	flag.StringVar(&cfg.ServerAddress, "a", "", "host to listen on")
+	flag.StringVar(&cfg.BaseURL, "b", "", "base url")
+	flag.StringVar(&cfg.FilePath, "f", "", "file storage path")
+	flag.StringVar(&cfg.DatabaseDSN, "d", "", "database dsn for connecting to postgres")
+	flag.StringVar(&cfg.ConfigPath, "c", "", "config path")
+	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "enable https")
+
+	flag.Parse()
+
+	configFromFile, err := cfg.parseConfigFile(cfg.ConfigPath)
+	if err != nil {
+		return &Config{}, err
+	}
+
+	cfg.BaseURL = coalesceStrings(cfg.BaseURL, os.Getenv("BASE_URL"), configFromFile.BaseURL, "http://localhost:8080")
+	cfg.ServerAddress = coalesceStrings(cfg.ServerAddress, os.Getenv("SERVER_ADDRESS"), configFromFile.ServerAddress, ":8080")
+	cfg.FilePath = coalesceStrings(cfg.FilePath, os.Getenv("FILE_STORAGE_PATH"), configFromFile.FilePath)
+	cfg.DatabaseDSN = coalesceStrings(cfg.DatabaseDSN, os.Getenv("DATABASE_DSN"), configFromFile.DatabaseDSN)
+	cfg.EnableHTTPS = coalesceBool(cfg.EnableHTTPS, os.Getenv("ENABLE_HTTPS") == "true", configFromFile.EnableHTTPS)
+
+	return cfg, nil
 }
 
 // generateNewEncryptionKey generates a random key of the specified KeySize.
@@ -53,62 +75,29 @@ func generateNewEncryptionKey() []byte {
 	return randomKey
 }
 
-func (c *Config) Init() error {
-	flag.StringVar(&c.ServerAddress, "a", getEnv("SERVER_ADDRESS", ""), "host to listen on")
-	flag.StringVar(&c.BaseURL, "b", getEnv("BASE_URL", ""), "base url")
-	flag.StringVar(&c.FilePath, "f", getEnv("FILE_STORAGE_PATH", ""), "file storage path")
-	flag.StringVar(&c.DatabaseDSN, "d", getEnv("DATABASE_DSN", ""), "database dsn for connecting to postgres")
-	flag.StringVar(&c.ConfigPath, "c", getEnv("CONFIG", ""), "config path")
-	flag.BoolVar(&c.EnableHTTPS, "s", getEnv("ENABLE_HTTPS", "") == "true", "enable https")
-
-	flag.Parse()
-
-	if c.ConfigPath != "" {
-		return c.loadEmptyValuesFromFile(c.ConfigPath)
+func coalesceStrings(strings ...string) string {
+	for _, str := range strings {
+		if str != "" {
+			return str
+		}
 	}
-
-	if c.ServerAddress == "" {
-		c.ServerAddress = ":8080"
-	}
-
-	if c.BaseURL == "" {
-		c.BaseURL = "http://localhost:8080"
-	}
-
-	return nil
+	return ""
 }
 
-//nolint:cyclop
-func (c *Config) loadEmptyValuesFromFile(configPath string) error {
-	configFromFile, err := c.parseConfigFile(configPath)
-	if err != nil {
-		return err
+func coalesceBool(bools ...bool) bool {
+	for _, boolVar := range bools {
+		if boolVar {
+			return true
+		}
 	}
-
-	if c.BaseURL == "" && configFromFile.BaseURL != "" {
-		c.BaseURL = configFromFile.BaseURL
-	}
-
-	if c.ServerAddress == "" && configFromFile.ServerAddress != "" {
-		c.ServerAddress = configFromFile.ServerAddress
-	}
-
-	if c.FilePath == "" && configFromFile.FilePath != "" {
-		c.FilePath = configFromFile.FilePath
-	}
-
-	if c.DatabaseDSN == "" && configFromFile.DatabaseDSN != "" {
-		c.DatabaseDSN = configFromFile.DatabaseDSN
-	}
-
-	if !c.EnableHTTPS && configFromFile.EnableHTTPS {
-		c.EnableHTTPS = configFromFile.EnableHTTPS
-	}
-
-	return nil
+	return false
 }
 
 func (c *Config) parseConfigFile(configPath string) (Config, error) {
+	if configPath == "" {
+		return Config{}, nil
+	}
+
 	f, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
