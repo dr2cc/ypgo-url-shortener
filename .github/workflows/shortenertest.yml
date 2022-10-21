@@ -19,7 +19,6 @@ jobs:
   shortenertest:
     runs-on: ubuntu-latest
     container: golang:1.18
-    needs: branchtest
 
     services:
       postgres:
