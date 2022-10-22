@@ -102,6 +102,8 @@ func TestHandler_Shorten(t *testing.T) {
 			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
+			mockChecker := mocks.NewMockIPCheckerInterface(ctrl)
+
 			cfg := &config.Config{
 				BaseURL:       "http://localhost:8080",
 				ServerAddress: ":8080",
@@ -109,7 +111,7 @@ func TestHandler_Shorten(t *testing.T) {
 			}
 
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, mockChecker, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -235,6 +237,8 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
 			mockRandom.EXPECT().GenerateRandomBytes(12).Return(make([]byte, 12), nil).AnyTimes()
 
+			mockChecker := mocks.NewMockIPCheckerInterface(ctrl)
+
 			cfg := &config.Config{
 				BaseURL:       "http://localhost:8080",
 				ServerAddress: ":8080",
@@ -242,7 +246,7 @@ func TestHandler_ShortenAPI(t *testing.T) {
 			}
 
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, mockChecker, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 

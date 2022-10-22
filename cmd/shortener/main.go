@@ -44,8 +44,9 @@ func main() {
 
 	randomGenerator := &random.TrulyRandomGenerator{}
 	service := services.New(repo, gen, randomGenerator, cfg)
+	ipChecker := &services.IPChecker{}
 
-	srv, err := server.New(cfg, service)
+	srv, err := server.New(cfg, ipChecker, service)
 	if err != nil {
 		log.Print(err)
 		return

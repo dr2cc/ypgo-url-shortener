@@ -11,10 +11,10 @@ type Server interface {
 	Shutdown() error
 }
 
-func New(config *config.Config, service *services.Shortener) (Server, error) {
+func New(config *config.Config, ipChecker services.IPCheckerInterface, service *services.Shortener) (Server, error) {
 	if config.EnableHTTPS {
-		return NewHTTPS(config, service)
+		return NewHTTPS(config, ipChecker, service)
 	} else {
-		return NewHTTP(config, service)
+		return NewHTTP(config, ipChecker, service)
 	}
 }

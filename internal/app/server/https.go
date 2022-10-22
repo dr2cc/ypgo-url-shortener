@@ -40,10 +40,10 @@ func (s *HTTPS) Shutdown() error {
 	return s.server.Shutdown(context.Background())
 }
 
-func NewHTTPS(config *config.Config, service *services.Shortener) (Server, error) {
+func NewHTTPS(config *config.Config, ipChecker services.IPCheckerInterface, service *services.Shortener) (Server, error) {
 	server := &http.Server{
 		Addr:              config.ServerAddress,
-		Handler:           handlers.NewRouter(service, config),
+		Handler:           handlers.NewRouter(service, ipChecker, config),
 		ReadHeaderTimeout: 1 * time.Second,
 	}
 

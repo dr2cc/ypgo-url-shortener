@@ -18,7 +18,7 @@ import (
 const UserIDCookieName = "shortener-user-id"
 
 // NewRouter creates a new router, adds some middleware, and then adds some routes
-func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
+func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterface, config *config.Config) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -34,8 +34,31 @@ func NewRouter(service *services.Shortener, config *config.Config) chi.Router {
 	r.Get("/api/user/urls", h.UserURLs)
 	r.Get("/ping", h.Ping)
 	r.Delete("/api/user/urls", h.DeleteUrls)
+	r.Group(func(r chi.Router) {
+		r.Use(FromTrustedSubnet(ipChecker))
+		r.Get("/api/internal/stats", h.Stats)
+	})
 
 	return r
+}
+
+func FromTrustedSubnet(checkerInterface services.IPCheckerInterface) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fromTrustedSubnet, err := checkerInterface.IsRequestFromTrustedSubnet(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if !fromTrustedSubnet {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 type Handler struct {

@@ -24,10 +24,10 @@ func (s *HTTP) Shutdown() error {
 	return s.server.Shutdown(context.Background())
 }
 
-func NewHTTP(config *config.Config, service *services.Shortener) (Server, error) {
+func NewHTTP(config *config.Config, ipChecker services.IPCheckerInterface, service *services.Shortener) (Server, error) {
 	httpServer := &http.Server{
 		Addr:              config.ServerAddress,
-		Handler:           handlers.NewRouter(service, config),
+		Handler:           handlers.NewRouter(service, ipChecker, config),
 		ReadHeaderTimeout: 1 * time.Second,
 	}
 	server := &HTTP{

@@ -35,6 +35,7 @@ mock: ## Generate mocks
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/repository.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/storage Repository
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/generator.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/generator URLGenerator
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/random.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/random Generator
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/ipchecker.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services IPCheckerInterface
 
 lint:
 	$(docker_bin) run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run

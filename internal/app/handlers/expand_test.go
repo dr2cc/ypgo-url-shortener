@@ -110,6 +110,8 @@ func TestHandler_Expand(t *testing.T) {
 			mockRandom := mocks.NewMockGenerator(ctrl)
 			mockRandom.EXPECT().GenerateNewUserID().Return("user id").AnyTimes()
 
+			mockChecker := mocks.NewMockIPCheckerInterface(ctrl)
+
 			cfg := &config.Config{
 				BaseURL:       "http://localhost:8080",
 				ServerAddress: ":8080",
@@ -117,7 +119,7 @@ func TestHandler_Expand(t *testing.T) {
 			}
 
 			service := services.New(mockRepo, mockGen, mockRandom, cfg)
-			r := NewRouter(service, cfg)
+			r := NewRouter(service, mockChecker, cfg)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
