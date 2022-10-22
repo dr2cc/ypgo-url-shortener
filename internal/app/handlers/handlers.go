@@ -47,7 +47,7 @@ func FromTrustedSubnet(checkerInterface services.IPCheckerInterface) func(http.H
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fromTrustedSubnet, err := checkerInterface.IsRequestFromTrustedSubnet(r)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusForbidden)
 				return
 			}
 
