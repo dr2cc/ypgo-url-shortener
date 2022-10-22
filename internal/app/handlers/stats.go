@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) Stats(w http.ResponseWriter, r *http.Request) {
-	stats, err := h.service.GetStats()
+	stats, err := h.service.GetStats(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -16,6 +16,7 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShortener_Expand(t *testing.T) {
@@ -371,4 +372,59 @@ func randStringBytes(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))] //nolint:gosec
 	}
 	return string(b)
+}
+
+func TestShortener_GetStats(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantStats  models.Stats
+		usersCount int
+		urlsCount  int
+		wantErr    bool
+	}{
+		{
+			name: "it deletes correct urls",
+			wantStats: models.Stats{
+				UrlsCount:  20,
+				UsersCount: 10,
+			},
+			usersCount: 10,
+			urlsCount:  20,
+			wantErr:    false,
+		},
+		{
+			name:       "it deletes correct urls",
+			wantStats:  models.Stats{},
+			usersCount: 0,
+			urlsCount:  0,
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mocks.NewMockRepository(ctrl)
+			if tt.wantErr {
+				mockRepo.EXPECT().GetUsersAndUrlsCount(context.Background()).Return(0, 0, errors.New("")).AnyTimes()
+			} else {
+				mockRepo.EXPECT().GetUsersAndUrlsCount(context.Background()).Return(tt.usersCount, tt.urlsCount, nil).AnyTimes()
+			}
+
+			mockGen := mocks.NewMockURLGenerator(ctrl)
+			mockRandom := mocks.NewMockGenerator(ctrl)
+			cfg := &config.Config{}
+
+			service := New(mockRepo, mockGen, mockRandom, cfg)
+
+			stats, err := service.GetStats(context.Background())
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tt.wantStats, stats)
+		})
+	}
 }

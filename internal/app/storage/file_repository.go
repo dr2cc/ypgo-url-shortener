@@ -246,3 +246,8 @@ func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortU
 	}
 	return nil
 }
+
+func (repo *FileRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
+	// TODO implement me
+	panic("implement me")
+}

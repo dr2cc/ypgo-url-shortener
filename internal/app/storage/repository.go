@@ -40,6 +40,7 @@ type Repository interface {
 	Check(ctx context.Context) error
 	SaveBatch(ctx context.Context, batch []models.ShortURL) error
 	DeleteUrls(ctx context.Context, urls []models.ShortURL) error
+	GetUsersAndUrlsCount(ctx context.Context) (int, int, error)
 }
 
 // GetRepo is fabric that returns repository implementation based on cfg.

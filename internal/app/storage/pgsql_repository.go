@@ -175,3 +175,8 @@ func (repo *PgRepository) DeleteUrls(ctx context.Context, urls []models.ShortURL
 
 	return nil
 }
+
+func (repo *PgRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
+	// TODO implement me
+	panic("implement me")
+}

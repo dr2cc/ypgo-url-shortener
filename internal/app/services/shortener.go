@@ -175,9 +175,13 @@ func (service *Shortener) DeleteUrls(ctx context.Context, ids []string, userID s
 	}
 }
 
-func (service *Shortener) GetStats() (models.Stats, error) {
-	// TODO: implement
-	return models.Stats{}, nil
+func (service *Shortener) GetStats(ctx context.Context) (models.Stats, error) {
+	usersCount, urlsCount, err := service.repository.GetUsersAndUrlsCount(ctx)
+	if err != nil {
+		return models.Stats{}, err
+	}
+
+	return models.Stats{UsersCount: usersCount, UrlsCount: urlsCount}, nil
 }
 
 func newWorker(urlID string, userID string, out chan models.ShortURL) {

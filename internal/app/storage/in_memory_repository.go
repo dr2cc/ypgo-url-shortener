@@ -113,3 +113,8 @@ func (repo *InMemoryRepository) DeleteUrls(_ context.Context, urls []models.Shor
 
 	return nil
 }
+
+func (repo *InMemoryRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
+	// TODO implement me
+	panic("implement me")
+}
