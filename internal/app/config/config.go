@@ -20,6 +20,7 @@ type Config struct {
 	DatabaseDSN    string `json:"database_dsn"`
 	MigrationsPath string
 	ConfigPath     string
+	TrustedSubnet  string `json:"trusted_subnet"`
 	EncryptionKey  []byte
 	EnableHTTPS    bool `json:"enable_https"`
 }
@@ -40,6 +41,7 @@ func New() (*Config, error) {
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "file://internal/app/storage/migrations/"),
 		EnableHTTPS:    false,
 		ConfigPath:     "",
+		TrustedSubnet:  "",
 	}
 
 	flag.StringVar(&cfg.ServerAddress, "a", "", "host to listen on")
@@ -47,6 +49,7 @@ func New() (*Config, error) {
 	flag.StringVar(&cfg.FilePath, "f", "", "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", "", "database dsn for connecting to postgres")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "config path")
+	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet (CIDR notation)")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "enable https")
 
 	flag.Parse()
@@ -61,6 +64,7 @@ func New() (*Config, error) {
 	cfg.FilePath = coalesceStrings(cfg.FilePath, os.Getenv("FILE_STORAGE_PATH"), configFromFile.FilePath)
 	cfg.DatabaseDSN = coalesceStrings(cfg.DatabaseDSN, os.Getenv("DATABASE_DSN"), configFromFile.DatabaseDSN)
 	cfg.EnableHTTPS = coalesceBool(cfg.EnableHTTPS, os.Getenv("ENABLE_HTTPS") == "true", configFromFile.EnableHTTPS)
+	cfg.TrustedSubnet = coalesceStrings(cfg.TrustedSubnet, os.Getenv("TRUSTED_SUBNET"), configFromFile.TrustedSubnet)
 
 	return cfg, nil
 }
