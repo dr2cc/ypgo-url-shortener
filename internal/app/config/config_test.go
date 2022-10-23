@@ -13,6 +13,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ":8080", c.ServerAddress)
 		assert.Equal(t, "http://localhost:8080", c.BaseURL)
+		assert.Equal(t, "127.0.0.1/24", c.TrustedSubnet)
 		assert.Len(t, c.EncryptionKey, 32)
 		assert.NotEmpty(t, c.EncryptionKey)
 	})

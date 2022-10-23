@@ -64,7 +64,7 @@ func New() (*Config, error) {
 	cfg.FilePath = coalesceStrings(cfg.FilePath, os.Getenv("FILE_STORAGE_PATH"), configFromFile.FilePath)
 	cfg.DatabaseDSN = coalesceStrings(cfg.DatabaseDSN, os.Getenv("DATABASE_DSN"), configFromFile.DatabaseDSN)
 	cfg.EnableHTTPS = coalesceBool(cfg.EnableHTTPS, os.Getenv("ENABLE_HTTPS") == "true", configFromFile.EnableHTTPS)
-	cfg.TrustedSubnet = coalesceStrings(cfg.TrustedSubnet, os.Getenv("TRUSTED_SUBNET"), configFromFile.TrustedSubnet)
+	cfg.TrustedSubnet = coalesceStrings(cfg.TrustedSubnet, os.Getenv("TRUSTED_SUBNET"), configFromFile.TrustedSubnet, "127.0.0.1/24")
 
 	return cfg, nil
 }
