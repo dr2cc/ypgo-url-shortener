@@ -20,6 +20,8 @@ func TestHandler_Stats(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockRepository(ctrl)
+	mockRepo.EXPECT().GetUsersAndUrlsCount(gomock.Any()).Return(0, 0, nil).AnyTimes()
+
 	mockGen := mocks.NewMockURLGenerator(ctrl)
 	mockRandom := mocks.NewMockGenerator(ctrl)
 	cfg := &config.Config{

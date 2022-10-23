@@ -577,3 +577,45 @@ func TestFileRepository_GetUsersUrls(t *testing.T) {
 		})
 	}
 }
+
+func TestFileRepository_GetUsersAndUrlsCount(t *testing.T) {
+	filename := "./test_get_count"
+	repo, err := NewFileRepository(filename)
+	require.NoError(t, err)
+	defer func(repo *FileRepository) {
+		errClose := repo.Close(context.Background())
+		require.NoError(t, errClose)
+	}(repo)
+	defer func(name string) {
+		errRemove := os.Remove(name)
+		require.NoError(t, errRemove)
+	}(filename)
+
+	err = repo.Save(context.Background(), models.ShortURL{
+		OriginalURL: "url",
+		ID:          "id",
+		CreatedByID: "user id",
+	})
+	require.NoError(t, err)
+
+	err = repo.Save(context.Background(), models.ShortURL{
+		OriginalURL: "url3",
+		ID:          "id3",
+		CreatedByID: "user id",
+	})
+	require.NoError(t, err)
+
+	err = repo.Save(context.Background(), models.ShortURL{
+		OriginalURL: "url2",
+		ID:          "id2",
+		CreatedByID: "user2 id",
+	})
+	require.NoError(t, err)
+
+	t.Run("it count users and urls count", func(t *testing.T) {
+		usersCount, urlsCount, errGet := repo.GetUsersAndUrlsCount(context.Background())
+		require.NoError(t, errGet)
+		assert.Equal(t, 2, usersCount)
+		assert.Equal(t, 3, urlsCount)
+	})
+}

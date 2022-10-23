@@ -284,6 +284,49 @@ func TestInMemoryRepository_GetUsersUrls(t *testing.T) {
 	}
 }
 
+func TestInMemoryRepository_GetUsersAndUrlsCount(t *testing.T) {
+	tests := []struct {
+		storage    map[string]models.ShortURL
+		name       string
+		usersCount int
+		urlsCount  int
+	}{
+		{
+			name: "it returns urls of user",
+			storage: map[string]models.ShortURL{
+				"id": {
+					OriginalURL: "url",
+					ID:          "id",
+					CreatedByID: "user",
+				},
+				"id2": {
+					OriginalURL: "url2",
+					ID:          "id2",
+					CreatedByID: "user2",
+				},
+				"id3": {
+					OriginalURL: "url3",
+					ID:          "id3",
+					CreatedByID: "user2",
+				},
+			},
+			usersCount: 2,
+			urlsCount:  3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &InMemoryRepository{
+				storage: tt.storage,
+			}
+			usersCount, urlsCount, err := repo.GetUsersAndUrlsCount(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tt.usersCount, usersCount)
+			assert.Equal(t, tt.urlsCount, urlsCount)
+		})
+	}
+}
+
 func TestInMemoryRepository_DeleteUrls(t *testing.T) {
 	type fields struct {
 		storage map[string]models.ShortURL

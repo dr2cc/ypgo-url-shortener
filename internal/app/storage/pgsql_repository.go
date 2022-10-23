@@ -176,7 +176,12 @@ func (repo *PgRepository) DeleteUrls(ctx context.Context, urls []models.ShortURL
 	return nil
 }
 
-func (repo *PgRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
-	// TODO implement me
-	panic("implement me")
+func (repo *PgRepository) GetUsersAndUrlsCount(ctx context.Context) (int, int, error) {
+	var urlsCount int
+	var usersCount int
+	err := repo.conn.QueryRow(
+		ctx,
+		"select count('*'), count( distinct created_by) from urls",
+	).Scan(&urlsCount, &usersCount)
+	return usersCount, urlsCount, err
 }

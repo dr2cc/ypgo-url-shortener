@@ -173,6 +173,35 @@ func (s *PgRepositoryTestSuite) TestGetUsersUrls() {
 	assert.Equal(s.T(), []models.ShortURL{m1, m2}, fetched)
 }
 
+func (s *PgRepositoryTestSuite) TestGetUsersAndUrlsCount() {
+	m1 := models.ShortURL{
+		OriginalURL:   "url",
+		ID:            "id",
+		CreatedByID:   "user id",
+		CorrelationID: "cor id",
+		DeletedAt:     truncate(time.Now()).UTC(),
+	}
+	m2 := models.ShortURL{
+		OriginalURL: "url2",
+		ID:          "id2",
+		CreatedByID: "user id",
+	}
+	m3 := models.ShortURL{
+		OriginalURL:   "url3",
+		ID:            "id3",
+		CreatedByID:   "user3",
+		CorrelationID: "cor3",
+	}
+	err := s.repo.SaveBatch(context.Background(), []models.ShortURL{m1, m2, m3})
+	require.NoError(s.T(), err)
+
+	usersCount, urlsCount, err := s.repo.GetUsersAndUrlsCount(context.Background())
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), 2, usersCount)
+	assert.Equal(s.T(), 3, urlsCount)
+}
+
 func (s *PgRepositoryTestSuite) TestDeleteUrls() {
 	m1 := models.ShortURL{
 		OriginalURL: "url",

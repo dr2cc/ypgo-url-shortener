@@ -115,6 +115,14 @@ func (repo *InMemoryRepository) DeleteUrls(_ context.Context, urls []models.Shor
 }
 
 func (repo *InMemoryRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
-	// TODO implement me
-	panic("implement me")
+	uniqueUsersIds := make(map[string]bool)
+
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	for _, shortURL := range repo.storage {
+		uniqueUsersIds[shortURL.CreatedByID] = true
+	}
+
+	return len(uniqueUsersIds), len(repo.storage), nil
 }

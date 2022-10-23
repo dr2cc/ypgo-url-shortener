@@ -248,6 +248,24 @@ func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortU
 }
 
 func (repo *FileRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
-	// TODO implement me
-	panic("implement me")
+	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
+		return 0, 0, err
+	}
+
+	uniqueUsersIds := make(map[string]bool)
+	urlsCount := 0
+
+	var entry models.ShortURL
+	scanner := bufio.NewScanner(repo.file)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry); err != nil {
+			return 0, 0, err
+		}
+		urlsCount++
+		uniqueUsersIds[entry.CreatedByID] = true
+	}
+
+	return len(uniqueUsersIds), urlsCount, nil
 }
