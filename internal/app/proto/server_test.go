@@ -80,8 +80,9 @@ func (s *ShortenTestSuite) SetupTest() {
 
 	go func(s *ShortenTestSuite) {
 		errServe := s.grpcServer.Serve(listener)
-
-		require.NoError(s.T(), errServe)
+		if errServe != nil {
+			log.Fatal(err)
+		}
 	}(s)
 
 	s.client = NewShortenerClient(conn)
