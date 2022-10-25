@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package shortener;
+
+option go_package = "shortener/pb";
+
+service Shortener {
+  rpc Shorten(ShortenRequest) returns (ShorteningResponse);
+  rpc DeleteUrls(DeleteUrlsRequest) returns (Empty);
+  rpc Expand(ExpandRequest) returns (ExpandResponse);
+  rpc ShortenBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
+}
+
+message Empty {}
+
+// requests
+message ShortenRequest {
+  string url = 1;
+  string user_id = 2; // if not provided, server will generate new user id
+}
+
+message DeleteUrlsRequest {
+  string user_id = 1;
+  repeated string url_ids = 2;
+}
+
+message ExpandRequest {
+  string url_id = 1;
+}
+
+message ShortenBatchRequest {
+  repeated ShortenBatchItemRequest urls = 1;
+  string user_id = 2;
+}
+
+message ShortenBatchItemRequest {
+  string correlation_id = 1;
+  string original_url = 2;
+}
+
+//responses
+message ShorteningResponse {
+  string result_url = 1;
+  string user_id = 2;
+  string url_id = 3;
+}
+
+message ExpandResponse {
+  string full_url = 1;
+}
+
+message ShortenBatchResponse {
+  repeated ShortenBatchItemResponse urls = 1;
+}
+
+message ShortenBatchItemResponse {
+  string correlation_id = 1;
+  string result_url = 2;
+  string url_id = 3;
+  string user_id = 4;
+}

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
-	"github.com/belamov/ypgo-url-shortener/internal/app/handlers"
+	handlers "github.com/belamov/ypgo-url-shortener/internal/app/http_handlers"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
 )
 

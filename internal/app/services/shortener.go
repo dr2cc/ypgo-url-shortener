@@ -17,26 +17,16 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
 )
 
-// shorteningError is error wrapper of any error occurred in service.
-type shorteningError struct {
-	Err      error
-	ShortURL models.ShortURL
-}
-
-func (err *shorteningError) Error() string {
-	return fmt.Sprintf("error while shortening: %v", err.Err)
-}
-
-func (err *shorteningError) Unwrap() error {
-	return err.Err
-}
-
-// NewShorteningError wraps error err with additional info about url.
-func NewShorteningError(shortURL models.ShortURL, err error) error {
-	return &shorteningError{
-		Err:      err,
-		ShortURL: shortURL,
-	}
+type ShortenerInterface interface {
+	Shorten(ctx context.Context, url string, userID string) (models.ShortURL, error)
+	Expand(ctx context.Context, id string) (models.ShortURL, error)
+	FormatShortURL(urlID string) string
+	GetUrlsCreatedBy(ctx context.Context, userID string) ([]models.ShortURL, error)
+	HealthCheck(ctx context.Context) error
+	ShortenBatch(ctx context.Context, batch []models.ShortURL, userID string) ([]models.ShortURL, error)
+	GenerateNewUserID() string
+	DeleteUrls(ctx context.Context, ids []string, userID string)
+	GetStats(ctx context.Context) (models.Stats, error)
 }
 
 // Shortener is main service of application.
@@ -59,6 +49,28 @@ func New(
 		generator:  generator,
 		config:     config,
 		Random:     random,
+	}
+}
+
+// shorteningError is error wrapper of any error occurred in service.
+type shorteningError struct {
+	Err      error
+	ShortURL models.ShortURL
+}
+
+func (err *shorteningError) Error() string {
+	return fmt.Sprintf("error while shortening: %v", err.Err)
+}
+
+func (err *shorteningError) Unwrap() error {
+	return err.Err
+}
+
+// NewShorteningError wraps error err with additional info about url.
+func NewShorteningError(shortURL models.ShortURL, err error) error {
+	return &shorteningError{
+		Err:      err,
+		ShortURL: shortURL,
 	}
 }
 

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 )
@@ -22,7 +21,7 @@ func (h *Handler) DeleteUrls(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
-	go h.service.DeleteUrls(context.Background(), ids, userID) //nolint:contextcheck
+	go h.service.DeleteUrls(r.Context(), ids, userID)
 
 	w.WriteHeader(http.StatusAccepted)
 }

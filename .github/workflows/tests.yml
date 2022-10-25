@@ -29,7 +29,7 @@ jobs:
       - name: run tests with coverage
         run: |
           go test -v -covermode=count -coverprofile=$GITHUB_WORKSPACE/profile.cov_tmp ./...
-          cat $GITHUB_WORKSPACE/profile.cov_tmp | grep -v "mocks" | grep -v "_mock" > $GITHUB_WORKSPACE/profile.cov
+          cat $GITHUB_WORKSPACE/profile.cov_tmp | grep -v "mocks" | grep -v "_mock" | grep -v "pb.go" > $GITHUB_WORKSPACE/profile.cov
         env:
           DATABASE_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       - name: install goveralls

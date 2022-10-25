@@ -36,6 +36,13 @@ mock: ## Generate mocks
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/generator.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/generator URLGenerator
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/random.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/random Generator
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/ipchecker.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services IPCheckerInterface
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/shortener.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services ShortenerInterface
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) mockgen -destination=internal/app/mocks/cryptographer.go -package=mocks github.com/belamov/ypgo-url-shortener/internal/app/services/crypto Cryptographer
+
+proto: ## Generate proto files
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) protoc --go_out=. --go_opt=paths=source_relative \
+                                                                                          --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+                                                                                          internal/app/proto/*.proto
 
 lint:
 	$(docker_bin) run --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run
@@ -49,7 +56,7 @@ gofumpt:
 test: ## Execute tests
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go test -v ./...
 
-check: build fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
+check: build proto fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
 
 staticlint:
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go build -v -o /usr/src/app/cmd/staticlint/staticlint /usr/src/app/cmd/staticlint

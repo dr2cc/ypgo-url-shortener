@@ -10,8 +10,10 @@ import (
 	"syscall"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
+	pb "github.com/belamov/ypgo-url-shortener/internal/app/proto"
 	"github.com/belamov/ypgo-url-shortener/internal/app/server"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services"
+	"github.com/belamov/ypgo-url-shortener/internal/app/services/crypto"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
@@ -51,15 +53,51 @@ func main() {
 		return
 	}
 
-	srv, err := server.New(cfg, ipChecker, service)
+	restServer, err := server.New(cfg, ipChecker, service)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	cryptographer := &crypto.GCMAESCryptographer{
+		Random: randomGenerator,
+		Key:    cfg.EncryptionKey,
+	}
+	grpcServer, err := pb.NewGRPCServer(cfg, ipChecker, service, cryptographer)
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
 	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 1) //nolint:gomnd
+	sigint := make(chan os.Signal, 2) //nolint:gomnd
 	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
+	terminateCh := make(chan struct{})
+	go func() {
+		<-sigint
+		close(terminateCh)
+	}()
+
+	go runRestServer(restServer, terminateCh, idleConnsClosed)
+	go runGrpcServer(grpcServer, terminateCh)
+	<-idleConnsClosed
+	fmt.Println("Http Shutdown gracefully")
+}
+
+func runGrpcServer(grpcServer server.Server, sigint chan struct{}) {
+	go func() {
+		<-sigint
+		if errShutdown := grpcServer.Shutdown(); errShutdown != nil {
+			log.Printf("GRPC server Shutdown: %v", errShutdown)
+		}
+	}()
+
+	if errRun := grpcServer.Run(); errRun != http.ErrServerClosed && errRun != nil {
+		log.Printf("GRPC server ListenAndServe: %v", errRun)
+	}
+}
+
+func runRestServer(srv server.Server, sigint chan struct{}, idleConnsClosed chan struct{}) {
 	go func() {
 		<-sigint
 		if errShutdown := srv.Shutdown(); errShutdown != nil {
@@ -68,10 +106,7 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	if errRun := srv.Run(); errRun != http.ErrServerClosed {
+	if errRun := srv.Run(); errRun != http.ErrServerClosed && errRun != nil {
 		log.Printf("HTTP server ListenAndServe: %v", errRun)
-		return
 	}
-	<-idleConnsClosed
-	fmt.Println("Server Shutdown gracefully")
 }
