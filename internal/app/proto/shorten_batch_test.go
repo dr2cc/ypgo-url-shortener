@@ -144,16 +144,16 @@ func (s *ShortenTestSuite) TestShortenBatchWithoutUserID() {
 		UserId: "",
 	}
 
-	newUserId := "id"
+	newUserID := "id"
 
 	expectedResult := []models.ShortURL{
-		{OriginalURL: "url1", ID: "id1", CreatedByID: newUserId, CorrelationID: "corId1"},
-		{OriginalURL: "url2", ID: "id2", CreatedByID: newUserId, CorrelationID: "corId1"},
+		{OriginalURL: "url1", ID: "id1", CreatedByID: newUserID, CorrelationID: "corId1"},
+		{OriginalURL: "url2", ID: "id2", CreatedByID: newUserID, CorrelationID: "corId1"},
 	}
 	s.mockService.EXPECT().FormatShortURL(expectedResult[0].ID).Return(expectedResult[0].ID)
 	s.mockService.EXPECT().FormatShortURL(expectedResult[1].ID).Return(expectedResult[1].ID)
-	s.mockService.EXPECT().ShortenBatch(gomock.Any(), gomock.Any(), newUserId).Return(expectedResult, nil)
-	s.mockService.EXPECT().GenerateNewUserID().Return(newUserId)
+	s.mockService.EXPECT().ShortenBatch(gomock.Any(), gomock.Any(), newUserID).Return(expectedResult, nil)
+	s.mockService.EXPECT().GenerateNewUserID().Return(newUserID)
 
 	response, err := s.client.ShortenBatch(context.Background(), request)
 	require.NoError(s.T(), err)

@@ -51,10 +51,10 @@ func (s *ShortenTestSuite) SetupTest() {
 	ctrl := gomock.NewController(Reporter{s.T()})
 
 	mockService := mocks.NewMockShortenerInterface(ctrl)
-	mockIpChecker := mocks.NewMockIPCheckerInterface(ctrl)
+	mockIPChecker := mocks.NewMockIPCheckerInterface(ctrl)
 	mockCrypto := mocks.NewMockCryptographer(ctrl)
 
-	appServer, err := NewGRPCServer(&config.Config{}, mockIpChecker, mockService, mockCrypto)
+	appServer, err := NewGRPCServer(&config.Config{}, mockIPChecker, mockService, mockCrypto)
 	require.NoError(s.T(), err)
 
 	RegisterShortenerServer(grpcServer, appServer)
