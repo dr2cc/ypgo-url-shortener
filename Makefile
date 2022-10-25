@@ -54,7 +54,7 @@ gofumpt:
 	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) gofumpt -l -w .
 
 test: ## Execute tests
-	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go test -v ./...
+	$(docker_compose_bin) --file "$(docker_compose_yml)" run --rm $(app_container_name) go test -v -race ./...
 
 check: build proto fieldaligment-fix gofumpt lint test  ## Run tests and code analysis
 
