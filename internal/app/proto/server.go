@@ -2,7 +2,6 @@ package pb
 
 import (
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net"
 
@@ -29,15 +28,12 @@ func (s *GrcpServer) Run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("gRPC server started")
 
 	return s.server.Serve(listen)
 }
 
 func (s *GrcpServer) Shutdown() error {
-	s.server.Stop()
-	fmt.Println("gRPC server stopped")
-
+	s.server.GracefulStop()
 	return nil
 }
 

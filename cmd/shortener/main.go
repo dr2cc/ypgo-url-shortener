@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/config"
@@ -17,6 +17,8 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/generator"
 	"github.com/belamov/ypgo-url-shortener/internal/app/services/random"
 	"github.com/belamov/ypgo-url-shortener/internal/app/storage"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -26,37 +28,31 @@ var (
 )
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Caller().Logger()
+
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
 	cfg, err := config.New()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	gen := &generator.HashGenerator{}
 	repo := storage.GetRepo(cfg)
-	defer func(ctx context.Context, repo storage.Repository) {
-		errClose := repo.Close(ctx)
-		if errClose != nil {
-			log.Fatal(errClose)
-		}
-	}(context.Background(), repo)
 
 	randomGenerator := &random.TrulyRandomGenerator{}
 	service := services.New(repo, gen, randomGenerator, cfg)
 
 	ipChecker, err := services.NewIPChecker(cfg)
 	if err != nil {
-		log.Print(err)
-		return
+		log.Fatal().Err(err)
 	}
 
 	restServer, err := server.New(cfg, ipChecker, service)
 	if err != nil {
-		log.Print(err)
-		return
+		log.Fatal().Err(err)
 	}
 
 	cryptographer := &crypto.GCMAESCryptographer{
@@ -65,48 +61,45 @@ func main() {
 	}
 	grpcServer, err := pb.NewGRPCServer(cfg, ipChecker, service, cryptographer)
 	if err != nil {
-		log.Print(err)
-		return
+		log.Fatal().Err(err)
 	}
 
-	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 2) //nolint:gomnd
-	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
-	terminateCh := make(chan struct{})
-	go func() {
-		<-sigint
-		close(terminateCh)
-	}()
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	go runRestServer(restServer, terminateCh, idleConnsClosed)
-	go runGrpcServer(grpcServer, terminateCh)
-	<-idleConnsClosed
-	fmt.Println("Http Shutdown gracefully")
-}
+	wg := &sync.WaitGroup{}
+	wg.Add(2) //nolint:gomnd
+	go runServer(ctx, wg, restServer, "REST HTTP server")
+	go runServer(ctx, wg, grpcServer, "GRPC server")
+	wg.Wait()
 
-func runGrpcServer(grpcServer server.Server, sigint chan struct{}) {
-	go func() {
-		<-sigint
-		if errShutdown := grpcServer.Shutdown(); errShutdown != nil {
-			log.Printf("GRPC server Shutdown: %v", errShutdown)
-		}
-	}()
+	log.Info().Msg("trying to shutdown storage gracefully")
 
-	if errRun := grpcServer.Run(); errRun != http.ErrServerClosed && errRun != nil {
-		log.Printf("GRPC server ListenAndServe: %v", errRun)
+	errClose := repo.Close(context.Background()) //nolint:contextcheck
+	if errClose != nil {
+		log.Fatal().Err(errClose)
+	} else {
+		log.Info().Msg("storage closed gracefully")
 	}
+
+	log.Info().Msg("Goodbye")
 }
 
-func runRestServer(srv server.Server, sigint chan struct{}, idleConnsClosed chan struct{}) {
+func runServer(ctx context.Context, wg *sync.WaitGroup, server server.Server, serverName string) {
+	log.Info().Msgf("%s started", serverName)
+
 	go func() {
-		<-sigint
-		if errShutdown := srv.Shutdown(); errShutdown != nil {
-			log.Printf("HTTP server Shutdown: %v", errShutdown)
+		<-ctx.Done()
+		log.Info().Msgf("trying to shutdown %s gracefully", serverName)
+
+		if errShutdown := server.Shutdown(); errShutdown != nil {
+			log.Info().Msgf("%s server Shutdown: %v", serverName, errShutdown)
+		} else {
+			log.Info().Msgf("%s shutted down gracefully", serverName)
 		}
-		close(idleConnsClosed)
+		wg.Done()
 	}()
 
-	if errRun := srv.Run(); errRun != http.ErrServerClosed && errRun != nil {
-		log.Printf("HTTP server ListenAndServe: %v", errRun)
+	if errRun := server.Run(); errRun != http.ErrServerClosed && errRun != nil {
+		log.Info().Msgf("%s could not have started: %v", serverName, errRun)
 	}
 }

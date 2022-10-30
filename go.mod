@@ -12,6 +12,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgtype v1.11.0
 	github.com/jackc/pgx/v4 v4.16.1
+	github.com/rs/zerolog v1.15.0
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/tools v0.1.11-0.20220513221640-090b14e8501f
 	google.golang.org/grpc v1.45.0
