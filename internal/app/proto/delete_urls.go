@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *GrcpServer) DeleteUrls(ctx context.Context, r *DeleteUrlsRequest) (*Empty, error) {
+func (s *GRPCServer) DeleteUrls(ctx context.Context, r *DeleteUrlsRequest) (*Empty, error) {
 	if r.GetUserId() == "" {
 		return nil, status.Error(codes.InvalidArgument, `user_id required`)
 	}

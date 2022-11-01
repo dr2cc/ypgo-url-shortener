@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *GrcpServer) Shorten(ctx context.Context, r *ShortenRequest) (*ShorteningResponse, error) {
+func (s *GRPCServer) Shorten(ctx context.Context, r *ShortenRequest) (*ShorteningResponse, error) {
 	if r.Url == "" {
 		return nil, status.Error(codes.InvalidArgument, `full_url required`)
 	}
@@ -37,7 +37,7 @@ func (s *GrcpServer) Shorten(ctx context.Context, r *ShortenRequest) (*Shortenin
 	return s.newShorteningResponse(shortURL, userID), nil
 }
 
-func (s *GrcpServer) newShorteningResponse(shortURL models.ShortURL, userID string) *ShorteningResponse {
+func (s *GRPCServer) newShorteningResponse(shortURL models.ShortURL, userID string) *ShorteningResponse {
 	return &ShorteningResponse{
 		ResultUrl: s.service.FormatShortURL(shortURL.ID),
 		UserId:    userID,

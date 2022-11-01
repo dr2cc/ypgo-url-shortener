@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *GrcpServer) Expand(ctx context.Context, r *ExpandRequest) (*ExpandResponse, error) {
+func (s *GRPCServer) Expand(ctx context.Context, r *ExpandRequest) (*ExpandResponse, error) {
 	urlID := r.GetUrlId()
 	if urlID == "" {
 		return nil, status.Error(codes.InvalidArgument, "url_id is required")

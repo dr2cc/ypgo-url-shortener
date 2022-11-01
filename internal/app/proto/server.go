@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type GrcpServer struct {
+type GRPCServer struct {
 	UnimplementedShortenerServer
 	ipChecker services.IPCheckerInterface
 	service   services.ShortenerInterface
@@ -21,7 +21,7 @@ type GrcpServer struct {
 	crypto    crypto.Cryptographer // interface that we'll use to encrypt and decrypt values
 }
 
-func (s *GrcpServer) Run() error {
+func (s *GRPCServer) Run() error {
 	RegisterShortenerServer(s.server, s)
 
 	listen, err := net.Listen("tcp", "localhost:3200")
@@ -32,7 +32,7 @@ func (s *GrcpServer) Run() error {
 	return s.server.Serve(listen)
 }
 
-func (s *GrcpServer) Shutdown() error {
+func (s *GRPCServer) Shutdown() error {
 	s.server.GracefulStop()
 	return nil
 }
@@ -42,7 +42,7 @@ func NewGRPCServer(
 	ipChecker services.IPCheckerInterface,
 	service services.ShortenerInterface,
 	cryptographer crypto.Cryptographer,
-) (*GrcpServer, error) {
+) (*GRPCServer, error) {
 	s := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_recovery.StreamServerInterceptor(),
@@ -51,7 +51,7 @@ func NewGRPCServer(
 			grpc_recovery.UnaryServerInterceptor(),
 		)),
 	)
-	return &GrcpServer{
+	return &GRPCServer{
 		server:    s,
 		ipChecker: ipChecker,
 		service:   service,
@@ -60,7 +60,7 @@ func NewGRPCServer(
 }
 
 // decodeAndDecrypt takes encrypted and encoded to hex string and returns decoded and decrypted string.
-func (s *GrcpServer) decodeAndDecrypt(userID string) (string, error) {
+func (s *GRPCServer) decodeAndDecrypt(userID string) (string, error) {
 	if userID == "" {
 		return "", nil
 	}

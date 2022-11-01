@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *GrcpServer) ShortenBatch(ctx context.Context, r *ShortenBatchRequest) (*ShortenBatchResponse, error) {
+func (s *GRPCServer) ShortenBatch(ctx context.Context, r *ShortenBatchRequest) (*ShortenBatchResponse, error) {
 	userID, err := s.decodeAndDecrypt(r.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, `invalid user_id`)
