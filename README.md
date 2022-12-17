@@ -4,6 +4,12 @@
 [![lint](https://github.com/belamov/ypgo-url-shortener/actions/workflows/lint.yml/badge.svg)](https://github.com/belamov/ypgo-url-shortener/actions/workflows/golangci-lint.yml)
 [![go vet test](https://github.com/belamov/ypgo-url-shortener/actions/workflows/statictest.yml/badge.svg)](https://github.com/belamov/ypgo-url-shortener/actions/workflows/statictest.yml)
 
+## Практические задания на курсе [продвинутый go-разработчик](https://practicum.yandex.ru/go-advanced/)
+
+практика была оформлена в виде инкрементов, каждый инкремент открывался последовательно
+
+## Список инкрементов
+
 <details>
   <summary>Икнкремент 1</summary>
 
