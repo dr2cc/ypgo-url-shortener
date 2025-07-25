@@ -45,6 +45,11 @@ func main() {
 	randomGenerator := &random.TrulyRandomGenerator{}
 
 	// ОТСЮДА НАЧИНАЕТСЯ ЦЕПОЧКА ОБРАБОТЧИКОВ
+	// В скобках сам файл проекта:
+	// services.New (internal\app\server\server.go) -->
+	// server.NewHTTP (internal\app\server\http.go) или server.NewHTTPS (internal\app\server\https.go) -->
+	// тут все обработчики!
+	// handlers.NewRouter (internal\app\http_handlers\handlers.go)
 	service := services.New(repo, gen, randomGenerator, cfg)
 
 	ipChecker, err := services.NewIPChecker(cfg)

@@ -43,7 +43,8 @@ type Repository interface {
 	GetUsersAndUrlsCount(ctx context.Context) (int, int, error)
 }
 
-// GetRepo is fabric that returns repository implementation based on cfg.
+// GetRepo is fabric that returns
+// repository implementation based on cfg.
 func GetRepo(cfg *config.Config) Repository {
 	if cfg.DatabaseDSN != "" {
 		repo, err := NewPgRepository(cfg.DatabaseDSN, cfg.MigrationsPath)

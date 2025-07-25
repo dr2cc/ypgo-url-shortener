@@ -21,7 +21,8 @@ type FileRepository struct {
 	mutex  sync.RWMutex  // mutex that will be used to synchronize access to the file
 }
 
-// NewFileRepository creates new file repository. Creates file at filePath if it doesn't exist.
+// NewFileRepository creates new file repository.
+// Creates file at filePath if it doesn't exist.
 // It opens a file, creates a buffered writer, and returns a pointer to a FileRepository.
 func NewFileRepository(filePath string) (*FileRepository, error) {
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o777) //nolint:gomnd
@@ -129,7 +130,8 @@ func (repo *FileRepository) GetByID(_ context.Context, id string) (models.ShortU
 	return models.ShortURL{}, errors.New("can't find full url by id")
 }
 
-// GetUsersUrls reads the file line by line and returning all the urls that were created by user with id userID.
+// GetUsersUrls reads the file line by line and returning all the urls
+// that were created by user with id userID.
 func (repo *FileRepository) GetUsersUrls(_ context.Context, userID string) ([]models.ShortURL, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()

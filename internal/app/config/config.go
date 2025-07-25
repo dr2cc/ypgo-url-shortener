@@ -25,7 +25,8 @@ type Config struct {
 	EnableHTTPS    bool `json:"enable_https"`
 }
 
-// New reads the configuration from the command line flags, environment variables and a configuration file (with priority).
+// New reads the configuration from the command line flags,
+// environment variables and a configuration file (with priority).
 func New() (*Config, error) {
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) == 0 {
@@ -46,7 +47,7 @@ func New() (*Config, error) {
 
 	flag.StringVar(&cfg.ServerAddress, "a", "", "host to listen on")
 	flag.StringVar(&cfg.BaseURL, "b", "", "base url")
-	flag.StringVar(&cfg.FilePath, "f", "", "file storage path")
+	flag.StringVar(&cfg.FilePath, "f", "./cmd/Pip.json", "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", "", "database dsn for connecting to postgres")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "config path")
 	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet (CIDR notation)")
