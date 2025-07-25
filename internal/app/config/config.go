@@ -47,7 +47,7 @@ func New() (*Config, error) {
 
 	flag.StringVar(&cfg.ServerAddress, "a", "", "host to listen on")
 	flag.StringVar(&cfg.BaseURL, "b", "", "base url")
-	flag.StringVar(&cfg.FilePath, "f", "./cmd/Pip.json", "file storage path")
+	flag.StringVar(&cfg.FilePath, "f", "./cmd/shortener/Pip.json", "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", "", "database dsn for connecting to postgres")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "config path")
 	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet (CIDR notation)")
