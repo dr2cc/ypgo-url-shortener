@@ -43,6 +43,8 @@ func main() {
 	repo := storage.GetRepo(cfg)
 
 	randomGenerator := &random.TrulyRandomGenerator{}
+
+	// ОТСЮДА НАЧИНАЕТСЯ ЦЕПОЧКА ОБРАБОТЧИКОВ
 	service := services.New(repo, gen, randomGenerator, cfg)
 
 	ipChecker, err := services.NewIPChecker(cfg)
