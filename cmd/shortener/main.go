@@ -27,6 +27,11 @@ var (
 	buildCommit  = "N/A" //nolint:gochecknoglobals
 )
 
+// В таждую процедуру file_repository добавить тестувую печать
+// Вот это в отладочном json
+// "program": "${workspaceFolder}/cmd/shortener/main.go"
+// Позволяет отлаживать из любого каталога!
+
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Caller().Logger()
 
