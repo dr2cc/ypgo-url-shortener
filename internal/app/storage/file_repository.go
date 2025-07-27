@@ -46,6 +46,7 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortURL) error {
 	fmt.Println("метод (типа FileRepository) SaveBatch")
 	for _, shortURL := range batch {
+		fmt.Println("GetByID вызывается из SaveBatch")
 		_, err := repo.GetByID(ctx, shortURL.ID)
 		if err == nil {
 			return NewNotUniqueURLError(shortURL, nil)
@@ -81,6 +82,7 @@ func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortU
 // Save checks if the url is unique and then saving it to the file.
 func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
 	fmt.Println("метод (типа FileRepository) Save")
+	fmt.Println("GetByID вызывается из Save")
 	_, err := repo.GetByID(ctx, shortURL.ID)
 	if err == nil {
 		return NewNotUniqueURLError(shortURL, nil)

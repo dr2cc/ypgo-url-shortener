@@ -87,6 +87,7 @@ func (service *Shortener) Shorten(ctx context.Context, url string, userID string
 		CreatedByID: userID,
 	}
 
+	fmt.Println("Save вызывается из Shorten!")
 	err = service.repository.Save(ctx, shortURL)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {
@@ -101,6 +102,7 @@ func (service *Shortener) Shorten(ctx context.Context, url string, userID string
 
 // Expand expands full url from given id. Returns filled ShortURL struct.
 func (service *Shortener) Expand(ctx context.Context, id string) (models.ShortURL, error) {
+	fmt.Println("здесь GetByID??")
 	origURL, err := service.repository.GetByID(ctx, id)
 	if err != nil {
 		return models.ShortURL{}, err

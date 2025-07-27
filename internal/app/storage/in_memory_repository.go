@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -62,6 +63,7 @@ func (repo *InMemoryRepository) Save(_ context.Context, shortURL models.ShortURL
 
 // GetByID gets the url by id.
 func (repo *InMemoryRepository) GetByID(_ context.Context, id string) (models.ShortURL, error) {
+	fmt.Println("или тут GetByID?")
 	repo.mutex.RLock()
 	url, ok := repo.storage[id]
 	repo.mutex.RUnlock()
