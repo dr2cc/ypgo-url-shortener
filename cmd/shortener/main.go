@@ -27,7 +27,7 @@ var (
 	buildCommit  = "N/A" //nolint:gochecknoglobals
 )
 
-// В таждую процедуру file_repository добавить тестувую печать
+// В таждую функцию file_repository добавить тестувую печать
 // Вот это в отладочном json
 // "program": "${workspaceFolder}/cmd/shortener/main.go"
 // Позволяет отлаживать из любого каталога!
