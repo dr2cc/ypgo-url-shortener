@@ -28,7 +28,7 @@ type FileRepository struct {
 // Creates file at filePath if it doesn't exist.
 // It opens a file, creates a buffered writer, and returns a pointer to a FileRepository.
 func NewFileRepository(filePath string) (*FileRepository, error) {
-	fmt.Println("NewFileRepository")
+	fmt.Println("конструктор NewFileRepository")
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o777) //nolint:gomnd
 	if err != nil {
 		return nil, err
