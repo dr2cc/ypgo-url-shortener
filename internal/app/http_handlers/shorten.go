@@ -12,11 +12,14 @@ import (
 )
 
 func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
+	// Получается этого хватает, а все остальное делает
+	// chi..Use(middleware.Compress ??!
 	reader, err := getDecompressedReader(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	//
 
 	url, err := io.ReadAll(reader)
 	if err != nil {
