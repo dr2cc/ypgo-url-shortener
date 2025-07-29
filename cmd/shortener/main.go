@@ -47,25 +47,30 @@ func main() {
 	gen := &generator.HashGenerator{}
 
 	// Здесь выбор хранилища
-	// Эта версия финальная и тут выбор между
-	// NewPgRepository и NewFileRepository
+	// Это финальная версия приложения и тут выбор между
+	// NewPgRepository и NewFileRepository (нет map)
 	repo := storage.GetRepo(cfg)
 
 	randomGenerator := &random.TrulyRandomGenerator{}
 
-	// ОТСЮДА НАЧИНАЕТСЯ ЦЕПОЧКА ОБРАБОТЧИКОВ
-	// В скобках сам файл проекта:
-	// services.New (internal\app\server\server.go) -->
-	// server.NewHTTP (internal\app\server\http.go) или server.NewHTTPS (internal\app\server\https.go) -->
-	// тут все обработчики!
-	// handlers.NewRouter (internal\app\http_handlers\handlers.go)
+	// service имеет тип Shortener — основной сервис приложения
 	service := services.New(repo, gen, randomGenerator, cfg)
+	// ЦЕПОЧКА ОБРАБОТЧИКОВ
+	//
+	// services.New (internal\app\server\server.go) -->
+	// server.NewHTTP (internal\app\server\http.go) -->
+	// handlers.NewRouter (internal\app\http_handlers\handlers.go)
 
 	ipChecker, err := services.NewIPChecker(cfg)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
+	// Вот это уровень iter9 (29.07.2025) или выше
+	// restServer имеет type Server interface {
+	// 								Run() error
+	// 								Shutdown() error
+	// 								}
 	restServer, err := server.New(cfg, ipChecker, service)
 	if err != nil {
 		log.Fatal().Err(err)
@@ -75,6 +80,8 @@ func main() {
 		Random: randomGenerator,
 		Key:    cfg.EncryptionKey,
 	}
+
+	// Это не знаю еще какой iter
 	grpcServer, err := pb.NewGRPCServer(cfg, ipChecker, service, cryptographer)
 	if err != nil {
 		log.Fatal().Err(err)
@@ -84,6 +91,8 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2) //nolint:gomnd
+
+	// здесь старт в двух горутинах
 	go runServer(ctx, wg, restServer, "REST HTTP server")
 	go runServer(ctx, wg, grpcServer, "GRPC server")
 	wg.Wait()

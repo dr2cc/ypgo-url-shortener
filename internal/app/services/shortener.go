@@ -31,7 +31,8 @@ type ShortenerInterface interface {
 	GetStats(ctx context.Context) (models.Stats, error)
 }
 
-// Shortener is main service of application.
+// Shortener is the main service of the application
+// Shortener — основной сервис приложения
 type Shortener struct {
 	Random     random.Generator
 	repository storage.Repository
