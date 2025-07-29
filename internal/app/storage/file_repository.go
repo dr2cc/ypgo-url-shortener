@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
@@ -28,7 +30,9 @@ type FileRepository struct {
 // Creates file at filePath if it doesn't exist.
 // It opens a file, creates a buffered writer, and returns a pointer to a FileRepository.
 func NewFileRepository(filePath string) (*FileRepository, error) {
-	fmt.Println("конструктор NewFileRepository")
+	//log.Info().Msgf()
+	log.Info().Msgf("конструктор NewFileRepository, проверяем/создаем файл")
+	//fmt.Println("конструктор NewFileRepository, проверяем/создаем файл")
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o777) //nolint:gomnd
 	if err != nil {
 		return nil, err
@@ -44,7 +48,7 @@ func NewFileRepository(filePath string) (*FileRepository, error) {
 // SaveBatch saves multiple urls.
 // Checks if the urls are unique and then saving them.
 func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortURL) error {
-	fmt.Println("метод (типа FileRepository) SaveBatch")
+	log.Info().Msgf("метод (типа FileRepository) SaveBatch")
 	for _, shortURL := range batch {
 		fmt.Println("GetByID вызывается из SaveBatch")
 		_, err := repo.GetByID(ctx, shortURL.ID)
@@ -81,8 +85,10 @@ func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortU
 
 // Save checks if the url is unique and then saving it to the file.
 func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
-	fmt.Println("метод (типа FileRepository) Save")
-	fmt.Println("GetByID вызывается из Save")
+	// "github.com/rs/zerolog/log"
+	log.Info().Msgf("метод (типа FileRepository) Save")
+	// fmt.Println("метод (типа FileRepository) Save")
+	// fmt.Println("здесь GetByID вызывается из Save")
 	_, err := repo.GetByID(ctx, shortURL.ID)
 	if err == nil {
 		return NewNotUniqueURLError(shortURL, nil)
@@ -114,7 +120,7 @@ func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) 
 // GetByID gets url by id.
 // Reads the file line by line and returns url that matches given id.
 func (repo *FileRepository) GetByID(_ context.Context, id string) (models.ShortURL, error) {
-	fmt.Println("метод (типа FileRepository) GetByID")
+	log.Info().Msgf("метод (типа FileRepository) GetByID")
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -142,7 +148,7 @@ func (repo *FileRepository) GetByID(_ context.Context, id string) (models.ShortU
 // GetUsersUrls reads the file line by line and returning all the urls
 // that were created by user with id userID.
 func (repo *FileRepository) GetUsersUrls(_ context.Context, userID string) ([]models.ShortURL, error) {
-	fmt.Println("метод (типа FileRepository) GetUsersUrls")
+	log.Info().Msgf("метод (типа FileRepository) GetUsersUrls")
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -170,20 +176,20 @@ func (repo *FileRepository) GetUsersUrls(_ context.Context, userID string) ([]mo
 
 // Close closes file.
 func (repo *FileRepository) Close(_ context.Context) error {
-	fmt.Println("метод (типа FileRepository) Close")
+	log.Info().Msgf("метод (типа FileRepository) Close")
 	return repo.file.Close()
 }
 
 // Check checks if file is ok.
 func (repo *FileRepository) Check(_ context.Context) error {
-	fmt.Println("метод (типа FileRepository) Check")
+	log.Info().Msgf("метод (типа FileRepository) Check")
 	_, err := repo.file.Stat()
 	return err
 }
 
 // DeleteUrls deletes all given urls.
 func (repo *FileRepository) DeleteUrls(_ context.Context, urls []models.ShortURL) error {
-	fmt.Println("метод (типа FileRepository) Delete Urls")
+	log.Info().Msgf("метод (типа FileRepository) Delete Urls")
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
@@ -213,7 +219,7 @@ func (repo *FileRepository) DeleteUrls(_ context.Context, urls []models.ShortURL
 
 // readFileToMap reads the file and returns a map of all the urls in the file.
 func (repo *FileRepository) readFileToMap() (map[string]models.ShortURL, error) {
-	fmt.Println("метод (типа FileRepository) readFileToMap")
+	log.Info().Msgf("метод (типа FileRepository) readFileToMap")
 	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
@@ -234,7 +240,7 @@ func (repo *FileRepository) readFileToMap() (map[string]models.ShortURL, error) 
 
 // writeMapToFile writes the map to the file.
 func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortURL) error {
-	fmt.Println("метод (типа FileRepository) writeMapToFile")
+	log.Info().Msgf("метод (типа FileRepository) writeMapToFile")
 	if err := repo.file.Truncate(0); err != nil {
 		return err
 	}
@@ -265,7 +271,7 @@ func (repo *FileRepository) writeMapToFile(existingURLs map[string]models.ShortU
 }
 
 func (repo *FileRepository) GetUsersAndUrlsCount(_ context.Context) (int, int, error) {
-	fmt.Println("метод (типа FileRepository) GetUsersAndUrlsCount")
+	log.Info().Msgf("метод (типа FileRepository) GetUsersAndUrlsCount")
 	if _, err := repo.file.Seek(0, io.SeekStart); err != nil {
 		return 0, 0, err
 	}
