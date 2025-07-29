@@ -33,7 +33,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserID(r)
-
+	// отсюда вход в текстовый сократитель
 	shortURL, err := h.service.Shorten(r.Context(), string(url), userID)
 	var notUniqueErr *storage.NotUniqueURLError
 	if errors.As(err, &notUniqueErr) {

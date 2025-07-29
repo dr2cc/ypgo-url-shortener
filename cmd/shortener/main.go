@@ -45,6 +45,10 @@ func main() {
 	}
 
 	gen := &generator.HashGenerator{}
+
+	// Здесь выбор хранилища
+	// Эта версия финальная и тут выбор между
+	// NewPgRepository и NewFileRepository
 	repo := storage.GetRepo(cfg)
 
 	randomGenerator := &random.TrulyRandomGenerator{}
