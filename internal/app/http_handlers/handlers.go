@@ -30,10 +30,37 @@ func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterfac
 	r.Get("/{id}", h.Expand)
 	r.Post("/", h.Shorten)
 	r.Post("/api/shorten", h.ShortenAPI)
+	//
+	// здешний iter12
+	// Добавьте новый хендлер POST /api/shorten/batch,
+	// принимающий в теле запроса множество URL для сокращения в формате:
 	r.Post("/api/shorten/batch", h.ShortenBatchAPI)
+	//
+	// здешний iter9
+	// 	Добавьте в сервис функциональность аутентификации пользователя.
+
+	// Сервис должен иметь хендлер GET /api/user/urls,
+	// который сможет вернуть пользователю все когда-либо сокращённые им URL в формате:
+	// [
+	//     {
+	//         "short_url": "http://...",
+	//         "original_url": "http://..."
+	//     },
+	//     ...
+	// ]
 	r.Get("/api/user/urls", h.UserURLs)
+	//
+	// здешний iter10
+	// Добавьте в сервис хендлер GET /ping,
+	// который при запросе проверяет соединение с базой данных.
+	// При успешной проверке хендлер должен вернуть HTTP-статус 200 OK, при неуспешной — 500 Internal Server Error.
 	r.Get("/ping", h.Ping)
+	//
+	// здешний iter14
+	// Далее добавьте в сервис новый асинхронный хендлер DELETE /api/user/urls,
+	// который принимает список идентификаторов сокращённых URL для удаления в формате:
 	r.Delete("/api/user/urls", h.DeleteUrls)
+	//
 	r.Group(func(r chi.Router) {
 		r.Use(FromTrustedSubnet(ipChecker))
 		r.Get("/api/internal/stats", h.Stats)
