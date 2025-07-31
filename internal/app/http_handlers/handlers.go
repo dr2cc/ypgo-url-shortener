@@ -50,10 +50,11 @@ func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterfac
 	// ]
 	r.Get("/api/user/urls", h.UserURLs)
 	//
-	// здешний iter10
+	// здешний (и новый в 42-й к.) iter10
 	// Добавьте в сервис хендлер GET /ping,
 	// который при запросе проверяет соединение с базой данных.
 	// При успешной проверке хендлер должен вернуть HTTP-статус 200 OK, при неуспешной — 500 Internal Server Error.
+	//
 	r.Get("/ping", h.Ping)
 	//
 	// здешний iter14
