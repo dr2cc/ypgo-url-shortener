@@ -36,7 +36,7 @@ func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterfac
 	// принимающий в теле запроса множество URL для сокращения в формате:
 	r.Post("/api/shorten/batch", h.ShortenBatchAPI)
 	//
-	// здешний iter9
+	// 42 - iter14 (здешний iter9)
 	// 	Добавьте в сервис функциональность аутентификации пользователя.
 
 	// Сервис должен иметь хендлер GET /api/user/urls,
