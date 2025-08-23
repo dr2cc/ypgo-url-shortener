@@ -21,6 +21,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Строка запуска pg в docker
+//docker run --name=todo-db -e POSTGRES_PASSWORD=qwerty -p 5436:5432 -d --rm postgres
+//export DATABASE_DSN="postgres://postgres:qwerty@localhost:5436/postgres?sslmode=disable"
+
 var (
 	buildVersion = "N/A" //nolint:gochecknoglobals
 	buildDate    = "N/A" //nolint:gochecknoglobals
