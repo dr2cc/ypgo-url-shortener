@@ -33,6 +33,7 @@ type ShortenerInterface interface {
 
 // Shortener is the main service of the application
 // Shortener — основной сервис приложения
+// ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
 type Shortener struct {
 	Random     random.Generator
 	repository storage.Repository

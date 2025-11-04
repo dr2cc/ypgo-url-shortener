@@ -4,6 +4,7 @@ package models
 import "time"
 
 // ShortURL is main entity for system.
+// ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
 type ShortURL struct {
 	DeletedAt     time.Time `json:"deleted_at"`     // is used to mark a record as deleted
 	OriginalURL   string    `json:"url"`            // original URL that was shortened

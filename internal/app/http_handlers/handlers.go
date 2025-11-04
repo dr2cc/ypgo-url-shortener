@@ -89,6 +89,8 @@ func FromTrustedSubnet(checkerInterface services.IPCheckerInterface) func(http.H
 	}
 }
 
+// ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
+
 type Handler struct {
 	Mux     *chi.Mux             // router that we'll be using to handle our requests
 	service *services.Shortener  // service that will contain main business logic
