@@ -39,17 +39,17 @@ func main() {
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
+	// Configuration🧹🏦
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
-	gen := &generator.HashGenerator{}
-
-	// Здесь выбор хранилища
-	// Это финальная версия приложения и тут выбор между
-	// NewPgRepository и NewFileRepository (нет map)
+	// Repository🧹🏦
 	repo := storage.GetRepo(cfg)
+
+	// Use case🧹🏦
+	gen := &generator.HashGenerator{}
 
 	randomGenerator := &random.TrulyRandomGenerator{}
 
@@ -71,37 +71,39 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
-	// Вот это уровень iter9 (29.07.2025) или выше
-	// restServer имеет type Server interface {
-	// 								Run() error
-	// 								Shutdown() error
-	// 								}
-	restServer, err := server.New(cfg, ipChecker, service)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
 	cryptographer := &crypto.GCMAESCryptographer{
 		Random: randomGenerator,
 		Key:    cfg.EncryptionKey,
 	}
 
-	// Это не знаю еще какой iter
+	// HTTP Server🧹🏦
+	restServer, err := server.New(cfg, ipChecker, service)
+	// restServer реализует тип server.Server interface {
+	// 								Run() error
+	// 								Shutdown() error
+	// 								}
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	// GRPC Server🧹🏦
 	grpcServer, err := pb.NewGRPCServer(cfg, ipChecker, service, cryptographer)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
+	// Waiting signal🧹🏦
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2) //nolint:gomnd
 
-	// здесь старт в двух горутинах
+	// Старт в двух горутинах
 	go runServer(ctx, wg, restServer, "REST HTTP server")
 	go runServer(ctx, wg, grpcServer, "GRPC server")
 	wg.Wait()
 
+	// Shutdown🧹🏦
 	log.Info().Msg("trying to shutdown storage gracefully")
 
 	errClose := repo.Close(context.Background()) //nolint:contextcheck
