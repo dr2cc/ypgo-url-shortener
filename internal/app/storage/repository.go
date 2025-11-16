@@ -8,6 +8,18 @@ import (
 	"github.com/belamov/ypgo-url-shortener/internal/app/models"
 )
 
+// Repository saves and retrieves data from storage.
+type Repository interface {
+	Save(ctx context.Context, shortURL models.ShortURL) error
+	GetByID(ctx context.Context, id string) (models.ShortURL, error)
+	GetUsersUrls(ctx context.Context, userID string) ([]models.ShortURL, error)
+	Close(_ context.Context) error
+	Check(ctx context.Context) error
+	SaveBatch(ctx context.Context, batch []models.ShortURL) error
+	DeleteUrls(ctx context.Context, urls []models.ShortURL) error
+	GetUsersAndUrlsCount(ctx context.Context) (int, int, error)
+}
+
 // NotUniqueURLError is error occurred when saving url is already exists.
 type NotUniqueURLError struct {
 	Err      error
@@ -30,18 +42,6 @@ func NewNotUniqueURLError(shortURL models.ShortURL, err error) error {
 }
 
 var ErrNotUnique = func() error { return &NotUniqueURLError{} }()
-
-// Repository saves and retrieves data from storage.
-type Repository interface {
-	Save(ctx context.Context, shortURL models.ShortURL) error
-	GetByID(ctx context.Context, id string) (models.ShortURL, error)
-	GetUsersUrls(ctx context.Context, userID string) ([]models.ShortURL, error)
-	Close(_ context.Context) error
-	Check(ctx context.Context) error
-	SaveBatch(ctx context.Context, batch []models.ShortURL) error
-	DeleteUrls(ctx context.Context, urls []models.ShortURL) error
-	GetUsersAndUrlsCount(ctx context.Context) (int, int, error)
-}
 
 // GetRepo is fabric that returns
 // repository implementation based on cfg.
