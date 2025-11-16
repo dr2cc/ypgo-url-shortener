@@ -69,6 +69,7 @@ func (repo *PgRepository) Save(ctx context.Context, shortURL models.ShortURL) er
 		shortURL.DeletedAt,
 	)
 
+	// TODO: уникальнось!
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		if pgErr.Code == pgerrcode.UniqueViolation {
