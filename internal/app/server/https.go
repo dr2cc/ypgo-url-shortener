@@ -64,7 +64,8 @@ func NewHTTPS(config *config.Config, ipChecker services.IPCheckerInterface, serv
 }
 
 func getCertificate() (tls.Certificate, error) {
-	// nolint TODO: save and load from file
+	// nolint
+	// Загружать и сохранять из файла?❗
 	// tls.LoadX509KeyPair("server.crt", "server.key")
 	return generateCertificate()
 }
