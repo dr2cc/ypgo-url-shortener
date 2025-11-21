@@ -35,10 +35,12 @@ type ShortenerInterface interface {
 // Shortener — основной сервис приложения
 // ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
 type Shortener struct {
-	Random     random.Generator
 	repository storage.Repository
-	generator  generator.URLGenerator
-	config     *config.Config
+	// HashGenerator generates hash from url
+	generator generator.URLGenerator
+	// TrulyRandomGenerator используется для генерации действительно (truly) случайных значений.
+	Random random.Generator
+	config *config.Config
 }
 
 // New creates new service.
