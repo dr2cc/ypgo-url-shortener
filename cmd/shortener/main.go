@@ -55,7 +55,7 @@ func main() {
 
 	// ❗TODO: список главных структур services.Shortener (видимо аналог App в zha-go-clean-architecture)
 	// реализует методы интерфейса services.ShortenerInterface
-	// ❗другие ключевые структуры- handlers.Handler - models.ShortURL
+	// другие ключевые структуры- handlers.Handler - models.ShortURL
 	//
 	// Здесь начало цепочки, следующий шаг- restServer
 	// service имеет тип services.Shortener struct — основной сервис приложения

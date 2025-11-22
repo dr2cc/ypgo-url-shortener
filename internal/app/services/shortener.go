@@ -33,7 +33,9 @@ type ShortenerInterface interface {
 
 // Shortener is the main service of the application
 // Shortener — основной сервис приложения
-// ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
+// ❗IMP. Все поля (кроме конфигурации)
+// у main service - интерфейсы. Видимо связано с предотвращением «утечек абстракции».
+// https://habr.com/ru/articles/881918/
 type Shortener struct {
 	repository storage.Repository
 	// HashGenerator generates hash from url
