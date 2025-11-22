@@ -7,12 +7,11 @@ import (
 	"math/big"
 )
 
-// HashGenerator generates hash from url.
+// HashGenerator реализует метод GenerateIDFromString
+// интерфейса (generator)generator.URLGenerator
 type HashGenerator struct{}
 
-// GenerateIDFromString generates hash from url.
-//
-// It hashes given string to integer and encodes this integer to base 62.
+// GenerateIDFromString создает ID (shortURL) из url.
 func (HashGenerator) GenerateIDFromString(str string) (string, error) {
 	if str == "" {
 		return "", errors.New("empty string to generate id from")

@@ -1,7 +1,7 @@
 // Package generator is used for generating hash from string.
 package generator
 
-// URLGenerator generates hash from string.
+// interface URLGenerator,поведение (метод)- (base_64_hash_generator)generator.GenerateIDFromString
 type URLGenerator interface {
 	GenerateIDFromString(url string) (string, error)
 }

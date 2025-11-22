@@ -33,6 +33,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "url required", http.StatusBadRequest)
 			return
 		}
+		// Здесь в batch записываются все данные полученные из запроса клиента
 		batch[i] = models.ShortURL{
 			OriginalURL:   shortURLInput.OriginalURL,
 			CorrelationID: shortURLInput.CorrelationID,
@@ -41,6 +42,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserID(r)
 
+	// Здесь получаем ID (shortURL)
 	shortURLBatches, err := h.service.ShortenBatch(r.Context(), batch, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -55,7 +57,8 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 	for i, shortURLBatch := range shortURLBatches {
 		res[i] = responses.ShorteningBatchResult{
 			CorrelationID: shortURLBatch.CorrelationID,
-			ShortURL:      h.service.FormatShortURL(shortURLBatch.ID),
+			// здесь получаем сокращенную строку для ID?
+			ShortURL: h.service.FormatShortURL(shortURLBatch.ID),
 		}
 	}
 

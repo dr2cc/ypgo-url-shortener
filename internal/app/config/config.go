@@ -47,10 +47,7 @@ func New() (*Config, error) {
 
 	flag.StringVar(&cfg.ServerAddress, "a", "", "host to listen on")
 	flag.StringVar(&cfg.BaseURL, "b", "", "base url")
-	// "pip" или другой, это файл (работает и без расширения),
-	// который будет (должен) находиться в каталоге ./cmd/shortener/
-	// если его не указать- "", то "хранилище" в файле (iter9) не будет создаваться
-	flag.StringVar(&cfg.FilePath, "f", "pip", "file storage path")
+	flag.StringVar(&cfg.FilePath, "f", "", "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", "", "database dsn for connecting to postgres")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "config path")
 	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet (CIDR notation)")

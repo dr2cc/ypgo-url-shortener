@@ -38,7 +38,7 @@ type ShortenerInterface interface {
 // https://habr.com/ru/articles/881918/
 type Shortener struct {
 	repository storage.Repository
-	// HashGenerator generates hash from url
+	// interface URLGenerator generates hash from string.
 	generator generator.URLGenerator
 	// TrulyRandomGenerator используется для генерации действительно (truly) случайных значений.
 	Random random.Generator
@@ -60,26 +60,25 @@ func New(
 	}
 }
 
-// shorteningError is error wrapper of any error occurred in service.
-type shorteningError struct {
-	Err      error
-	ShortURL models.ShortURL
-}
-
-func (err *shorteningError) Error() string {
-	return fmt.Sprintf("error while shortening: %v", err.Err)
-}
-
-func (err *shorteningError) Unwrap() error {
-	return err.Err
-}
-
-// NewShorteningError wraps error err with additional info about url.
-func NewShorteningError(shortURL models.ShortURL, err error) error {
-	return &shorteningError{
-		Err:      err,
-		ShortURL: shortURL,
+// ShortenBatch добавляет ID в массив URL-адресов.
+// Все записи пакета должны содержать OriginalURL.
+func (service *Shortener) ShortenBatch(ctx context.Context, batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
+	for i, URL := range batch {
+		// поле generator (структуры Shortener) типа interface generator.URLGenerator, с поведением GenerateIDFromString
+		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		batch[i].ID = urlID
+		batch[i].CreatedByID = userID
 	}
+
+	// поле repository (структуры Shortener) типа interface storage.Repository, с поведением SaveBatch
+	if err := service.repository.SaveBatch(ctx, batch); err != nil {
+		return nil, err
+	}
+
+	return batch, nil
 }
 
 // Shorten shortens full url and returns filled struct ShortURL.
@@ -133,25 +132,6 @@ func (service *Shortener) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return service.repository.Check(ctx)
-}
-
-// ShortenBatch shortens array of urls.
-// All entries of batch must contain OriginalURL.
-func (service *Shortener) ShortenBatch(ctx context.Context, batch []models.ShortURL, userID string) ([]models.ShortURL, error) {
-	for i, URL := range batch {
-		urlID, err := service.generator.GenerateIDFromString(URL.OriginalURL)
-		if err != nil {
-			return nil, err
-		}
-		batch[i].ID = urlID
-		batch[i].CreatedByID = userID
-	}
-
-	if err := service.repository.SaveBatch(ctx, batch); err != nil {
-		return nil, err
-	}
-
-	return batch, nil
 }
 
 // GenerateNewUserID generates new user id.
@@ -244,4 +224,26 @@ func fanIn(done <-chan struct{}, channels ...chan models.ShortURL) chan models.S
 	}()
 
 	return multiplexedStream
+}
+
+// shorteningError is error wrapper of any error occurred in service.
+type shorteningError struct {
+	Err      error
+	ShortURL models.ShortURL
+}
+
+func (err *shorteningError) Error() string {
+	return fmt.Sprintf("error while shortening: %v", err.Err)
+}
+
+func (err *shorteningError) Unwrap() error {
+	return err.Err
+}
+
+// NewShorteningError wraps error err with additional info about url.
+func NewShorteningError(shortURL models.ShortURL, err error) error {
+	return &shorteningError{
+		Err:      err,
+		ShortURL: shortURL,
+	}
 }
