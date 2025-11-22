@@ -14,6 +14,7 @@ type Generator interface {
 }
 
 // TrulyRandomGenerator is used for generating truly random values.
+// TrulyRandomGenerator используется для генерации действительно случайных значений.
 type TrulyRandomGenerator struct{}
 
 // GenerateRandomBytes generates size random bytes.

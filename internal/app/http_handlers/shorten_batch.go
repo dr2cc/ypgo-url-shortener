@@ -53,12 +53,12 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	// Заполняем структуру для ответа
 	res := make([]responses.ShorteningBatchResult, len(shortURLBatches))
 	for i, shortURLBatch := range shortURLBatches {
 		res[i] = responses.ShorteningBatchResult{
 			CorrelationID: shortURLBatch.CorrelationID,
-			// здесь получаем сокращенную строку для ID?
-			ShortURL: h.service.FormatShortURL(shortURLBatch.ID),
+			ShortURL:      h.service.FormatShortURL(shortURLBatch.ID),
 		}
 	}
 

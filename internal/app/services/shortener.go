@@ -38,9 +38,11 @@ type ShortenerInterface interface {
 // https://habr.com/ru/articles/881918/
 type Shortener struct {
 	repository storage.Repository
-	// interface URLGenerator generates hash from string.
+	// interface URLGenerator
+	// имеет один метод (поведение)- (base_64_hash_generator)generator.GenerateIDFromString
+	// "создает" ID из строки URL
 	generator generator.URLGenerator
-	// TrulyRandomGenerator используется для генерации действительно (truly) случайных значений.
+	//
 	Random random.Generator
 	config *config.Config
 }
