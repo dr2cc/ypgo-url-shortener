@@ -35,8 +35,13 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
 	// отсюда вход в текстовый сократитель
 	shortURL, err := h.service.Shorten(r.Context(), string(url), userID)
+	// iter13 - уникальный индекс и ошибка 409
 	var notUniqueErr *storage.NotUniqueURLError
+	// func errors.As(err error, target any) bool
 	if errors.As(err, &notUniqueErr) {
+		// As находит первую ошибку в дереве err, соответствующую target,
+		// и, если она найдена, устанавливает target равным этому значению ошибки и возвращает true.
+		// В противном случае возвращает false.
 		writeShorteningResult(w, h, shortURL, http.StatusConflict)
 		return
 	}

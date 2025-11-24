@@ -20,7 +20,7 @@ type Repository interface {
 	GetUsersAndUrlsCount(ctx context.Context) (int, int, error)
 }
 
-// NotUniqueURLError is error occurred when saving url is already exists.
+// NotUniqueURLError — ошибка, возникшая при сохранении URL, который уже существует.
 type NotUniqueURLError struct {
 	Err      error
 	ShortURL models.ShortURL

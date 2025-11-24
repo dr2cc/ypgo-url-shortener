@@ -47,6 +47,11 @@ func (repo *InMemoryRepository) SaveBatch(_ context.Context, batch []models.Shor
 // Save checks if the url is unique and then saving it to the memory.
 func (repo *InMemoryRepository) Save(_ context.Context, shortURL models.ShortURL) error {
 	repo.mutex.RLock()
+	// "Comma-ok" idiom используется в Go везде, где операция может иметь два возможных исхода, которые невозможно однозначно интерпретировать,
+	// основываясь только на возвращаемом значении:
+	// 1. Поиск/Извлечение: (Map, Каналы, reflect). Проверка наличия элемента или того, что канал не закрыт.
+	// 2. Проверка соответствия: (Type Assertion). Проверка того, соответствует ли базовый тип интерфейса ожидаемому конкретному типу.
+	// 3...
 	_, ok := repo.storage[shortURL.ID]
 	repo.mutex.RUnlock()
 
