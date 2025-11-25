@@ -148,7 +148,6 @@ func (repo *FileRepository) GetByID(_ context.Context, id string) (models.ShortU
 // GetUsersUrls reads the file line by line and returning all the urls
 // that were created by user with id userID.
 func (repo *FileRepository) GetUsersUrls(_ context.Context, userID string) ([]models.ShortURL, error) {
-	log.Info().Msgf("метод GetUsersUrls . Вызывается Get(/api/user/urls")
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -161,18 +160,14 @@ func (repo *FileRepository) GetUsersUrls(_ context.Context, userID string) ([]mo
 
 	scanner := bufio.NewScanner(repo.file)
 
-	count := 0
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if err := json.NewDecoder(bytes.NewReader(line)).Decode(&entry); err != nil {
 			return nil, err
 		}
-		count += 1
-		fmt.Println(count)
-		// 30.07.25 userID берется из cookie сйчас у меня их нет, комментирую
-		//if entry.CreatedByID == userID {
-		URLs = append(URLs, entry)
-		//}
+		if entry.CreatedByID == userID {
+			URLs = append(URLs, entry)
+		}
 	}
 
 	return URLs, nil
