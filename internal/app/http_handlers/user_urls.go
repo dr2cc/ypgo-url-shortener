@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/belamov/ypgo-url-shortener/internal/app/responses"
 )
 
 func (h *Handler) UserURLs(w http.ResponseWriter, r *http.Request) {
-	// Что за userID ? Метод нашего хендлера- getUserID gets the userID from the cookie.
+	// userID
 	userID := h.getUserID(r)
-
+	fmt.Println(userID)
 	URLs, err := h.service.GetUrlsCreatedBy(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
