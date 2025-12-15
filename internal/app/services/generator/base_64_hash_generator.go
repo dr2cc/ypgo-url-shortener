@@ -1,4 +1,4 @@
-package generator
+package generator // => ./internal/app/services/generator
 
 import (
 	"encoding/binary"
