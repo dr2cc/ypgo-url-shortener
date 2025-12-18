@@ -17,10 +17,15 @@ import (
 )
 
 func TestHandler_Shorten(t *testing.T) {
+	// Arrange
 	type want struct {
 		body       string
 		statusCode int
 	}
+
+	// Табличное тестирование (table-driven tests).
+	// Создается переменная tests , ее тип - «срез из анонимных структур,
+	// содержащих поля name, body, method, want
 	tests := []struct {
 		name   string
 		body   string
