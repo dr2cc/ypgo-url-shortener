@@ -24,7 +24,8 @@ func TestHandler_Shorten(t *testing.T) {
 	}
 
 	// Табличное тестирование (table-driven tests).
-	// Создается переменная tests , ее тип - «срез из анонимных структур,
+	// Создается переменная tests ,
+	// ее тип - «срез из анонимных структур,
 	// содержащих поля name, body, method, want
 	tests := []struct {
 		name   string
