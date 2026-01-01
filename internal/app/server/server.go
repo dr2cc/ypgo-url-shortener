@@ -11,6 +11,7 @@ type Server interface {
 	Shutdown() error
 }
 
+// Вызывается из main
 func New(config *config.Config, ipChecker services.IPCheckerInterface, service *services.Shortener) (Server, error) {
 	if config.EnableHTTPS {
 		return NewHTTPS(config, ipChecker, service)

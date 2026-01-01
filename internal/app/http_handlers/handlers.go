@@ -15,7 +15,31 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// Кука для iter14
 const UserIDCookieName = "shortener-user-id"
+
+// 01.01.2026 Как я теперь понимаю здесь должны быть обязательно только три❗ сущности:
+// 🔸Handler struct  - главное назначение- передача запросов на уровень ниже --> service
+// 🔸func NewHandler - конструктор сущности Handler
+// 🔸func NewRouter (InitRoutes правильнее, это не конструктор) - описание всех обработчиков
+// Остальное- в зависимости от функционала приложения.
+// Не нужно все сносить сюда! Распределять по слоям!
+
+type Handler struct {
+	Mux     *chi.Mux             // router that we'll be using to handle our requests
+	service *services.Shortener  // service that will contain main business logic
+	crypto  crypto.Cryptographer // interface that we'll use to encrypt and decrypt values
+}
+
+// NewHandler creates a new instance of the Handler struct, initializes the chi mux, and sets the service and crypto fields
+func NewHandler(service *services.Shortener, config *config.Config) *Handler {
+	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey, Random: service.Random}
+	return &Handler{
+		Mux:     chi.NewMux(),
+		service: service,
+		crypto:  &cryptographer,
+	}
+}
 
 // NewRouter creates a new router, adds some middleware, and then adds some routes
 func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterface, config *config.Config) chi.Router {
@@ -70,6 +94,34 @@ func NewRouter(service *services.Shortener, ipChecker services.IPCheckerInterfac
 	return r
 }
 
+// getUserID gets the userID from the cookie.
+func (h *Handler) getUserID(r *http.Request) string {
+	encodedCookie, err := r.Cookie(UserIDCookieName)
+	if err != nil {
+		return h.service.GenerateNewUserID()
+	}
+
+	decodedCookie, err := hex.DecodeString(encodedCookie.Value)
+	if err != nil {
+		return h.service.GenerateNewUserID()
+	}
+
+	decryptedUserID, err := h.crypto.Decrypt(decodedCookie)
+	if err != nil {
+		return h.service.GenerateNewUserID()
+	}
+
+	return string(decryptedUserID)
+}
+
+// Ping правильнее вынести в отдельный файл (01.01.2026)
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	err := h.service.HealthCheck(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func FromTrustedSubnet(checkerInterface services.IPCheckerInterface) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -86,24 +138,6 @@ func FromTrustedSubnet(checkerInterface services.IPCheckerInterface) func(http.H
 
 			next.ServeHTTP(w, r)
 		})
-	}
-}
-
-// ❗TODO: список главных структур handlers.Handler - services.Shortener - models.ShortURL
-
-type Handler struct {
-	Mux     *chi.Mux             // router that we'll be using to handle our requests
-	service *services.Shortener  // service that will contain main business logic
-	crypto  crypto.Cryptographer // interface that we'll use to encrypt and decrypt values
-}
-
-// NewHandler creates a new instance of the Handler struct, initializes the chi mux, and sets the service and crypto fields
-func NewHandler(service *services.Shortener, config *config.Config) *Handler {
-	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey, Random: service.Random}
-	return &Handler{
-		Mux:     chi.NewMux(),
-		service: service,
-		crypto:  &cryptographer,
 	}
 }
 
@@ -132,32 +166,4 @@ func (h *Handler) addEncryptedUserIDToCookie(w *http.ResponseWriter, userID stri
 		},
 	)
 	return nil
-}
-
-// getUserID gets the userID from the cookie.
-func (h *Handler) getUserID(r *http.Request) string {
-	encodedCookie, err := r.Cookie(UserIDCookieName)
-	if err != nil {
-		return h.service.GenerateNewUserID()
-	}
-
-	decodedCookie, err := hex.DecodeString(encodedCookie.Value)
-	if err != nil {
-		return h.service.GenerateNewUserID()
-	}
-
-	decryptedUserID, err := h.crypto.Decrypt(decodedCookie)
-	if err != nil {
-		return h.service.GenerateNewUserID()
-	}
-
-	return string(decryptedUserID)
-}
-
-// Ping is a health check endpoint.
-func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-	err := h.service.HealthCheck(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }
