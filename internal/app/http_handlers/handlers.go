@@ -26,6 +26,7 @@ const UserIDCookieName = "shortener-user-id"
 // Не нужно все сносить сюда! Распределять по слоям!
 
 type Handler struct {
+	// ❌ Mux вообще не нужен (02.01.2026). Удалил в своем проекте- ничего не изменилось!
 	Mux     *chi.Mux             // router that we'll be using to handle our requests
 	service *services.Shortener  // service that will contain main business logic
 	crypto  crypto.Cryptographer // interface that we'll use to encrypt and decrypt values
@@ -35,6 +36,7 @@ type Handler struct {
 func NewHandler(service *services.Shortener, config *config.Config) *Handler {
 	cryptographer := crypto.GCMAESCryptographer{Key: config.EncryptionKey, Random: service.Random}
 	return &Handler{
+		// ❌ Mux вообще не нужен (02.01.2026). Удалил в своем проекте- ничего не изменилось!
 		Mux:     chi.NewMux(),
 		service: service,
 		crypto:  &cryptographer,
