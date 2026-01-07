@@ -83,6 +83,12 @@ func main() {
 	// 								Shutdown() error
 	// 								}
 	if err != nil {
+		// Что пишет Gemini:
+		// 🔸Проверьте main.go: Не используете ли вы log.Fatal при получении системного сигнала?
+		// 🔸Плохо: if sig := <-sigs; sig != nil { log.Fatal("stopped") } (дает exit status 1)
+		// У себя я делал (вместо log.Fatal().Err(err)):
+		// 	log.Error("failed to create http server", sl.Err(err))
+		// 	os.Exit(1)
 		log.Fatal().Err(err)
 	}
 
@@ -96,6 +102,7 @@ func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	wg := &sync.WaitGroup{}
+	// две горутины
 	wg.Add(2) //nolint:gomnd
 
 	// Старт в двух горутинах
@@ -103,7 +110,7 @@ func main() {
 	go runServer(ctx, wg, grpcServer, "GRPC server")
 	wg.Wait()
 
-	// Shutdown🧹🏦
+	// Close storage
 	log.Info().Msg("trying to shutdown storage gracefully")
 
 	errClose := repo.Close(context.Background()) //nolint:contextcheck
