@@ -36,11 +36,11 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	// отсюда вход в текстовый сократитель
 	shortURL, err := h.service.Shorten(r.Context(), string(url), userID)
 
-	// ❌ Явное (и грубое!) нарушение слоев!
-	// Мало того, что слой хендлеров занимается "проверкой" (!),
-	// так он еще и напрямую обращается к хранилищу!!
+	// ✔️ Проверка на уникальность. iter13 - уникальный индекс и ошибка 409
+	// ♊ пишет, что это правильно!
 	//
-	// iter13 - уникальный индекс и ошибка 409
+	// Сама проверка в методе Save (при записи в хранилище).
+	// Здесь генерируем нужный ответ - 409
 	var notUniqueErr *storage.NotUniqueURLError
 	// func errors.As(err error, target any) bool
 	if errors.As(err, &notUniqueErr) {
