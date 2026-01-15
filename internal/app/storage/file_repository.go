@@ -85,10 +85,6 @@ func (repo *FileRepository) SaveBatch(ctx context.Context, batch []models.ShortU
 
 // Save checks if the url is unique and then saving it to the file.
 func (repo *FileRepository) Save(ctx context.Context, shortURL models.ShortURL) error {
-	// "github.com/rs/zerolog/log"
-	log.Info().Msgf("метод (типа FileRepository) Save")
-	// fmt.Println("метод (типа FileRepository) Save")
-	// fmt.Println("здесь GetByID вызывается из Save")
 	_, err := repo.GetByID(ctx, shortURL.ID)
 	if err == nil {
 		return NewNotUniqueURLError(shortURL, nil)
