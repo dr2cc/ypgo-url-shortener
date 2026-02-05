@@ -62,6 +62,7 @@ func (h *Handler) ShortenBatchAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// 05.02.26 json.Marshal имеет серьезный минус- память!
 	out, err := json.Marshal(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

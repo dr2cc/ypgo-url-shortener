@@ -113,6 +113,8 @@ func (h *Handler) ShortenAPI(w http.ResponseWriter, r *http.Request) {
 func writeShorteningAPIResult(w http.ResponseWriter, h *Handler, shortURL models.ShortURL, status int) {
 	res := responses.ShorteningResult{Result: h.service.FormatShortURL(shortURL.ID)}
 
+	// 05.02.26 json.Marshal отлично подходит для небольших запросов
+	// и позволяет свободно пользоваться статус-кодами
 	out, err := json.Marshal(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
